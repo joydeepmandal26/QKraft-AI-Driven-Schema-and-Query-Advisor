@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import models, schemas
 from .database import engine, get_db
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -30,12 +36,26 @@ def create_schema(schema: schemas.SchemaCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/advisor/chat", response_model=schemas.QueryResponse)
 def advisor_chat(payload: schemas.QueryRequest):
-    # TODO: Integrate AI model properly
-    # For now, return a mocked optimized SQL
-    return {"status": "success", "optimized_sql": f"SELECT * FROM simulated_table WHERE query='{payload.query}'"}
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"You are a Postgres SQL query expert. Given the following database schema:\n\n{payload.schema_content}\n\nWrite an optimized SQL query for this request: '{payload.query}'. Only provide the SQL code, without markdown formatting if possible."
+        response = model.generate_content(prompt)
+        return {"status": "success", "optimized_sql": response.text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/schema/analyze", response_model=schemas.AnalyzeResponse)
 def analyze_schema(payload: schemas.AnalyzeRequest):
-    # TODO: Implement performance rating logic based on payload.schema_content
-    return {"status": "success", "recommendations": ["Add index on user_id", "Consider foreign key on orders.user_id"]}
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"Analyze the following database schema and provide performance recommendations (e.g., missing indexes, foreign keys, normalization). Return only a bulleted list (one point per line). Schema:\n\n{payload.schema_content}"
+        response = model.generate_content(prompt)
+        
+        # Parse the bullet points into a list of strings
+        recommendations = [line.strip().lstrip('-').lstrip('*').strip() for line in response.text.split('\n') if line.strip()]
+        
+        return {"status": "success", "recommendations": recommendations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
