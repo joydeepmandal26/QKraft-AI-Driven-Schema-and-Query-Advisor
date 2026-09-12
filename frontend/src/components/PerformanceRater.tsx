@@ -18,6 +18,9 @@ export default function PerformanceRater({ schemaContent }: { schemaContent: str
                 body: JSON.stringify({ schema_content: schemaContent })
             });
             const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || 'Error connecting to rater.');
+            }
             setRecommendations(data.recommendations || []);
             setAnalyzed(true);
         } catch (error) {

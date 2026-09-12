@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from . import models, schemas
-from .database import engine, get_db
+import models
+import schemas
+from database import engine, get_db
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -42,6 +43,7 @@ def advisor_chat(payload: schemas.QueryRequest):
         response = model.generate_content(prompt)
         return {"status": "success", "optimized_sql": response.text.strip()}
     except Exception as e:
+        print("Error in advisor_chat:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/schema/analyze", response_model=schemas.AnalyzeResponse)
@@ -56,6 +58,8 @@ def analyze_schema(payload: schemas.AnalyzeRequest):
         
         return {"status": "success", "recommendations": recommendations}
     except Exception as e:
+        print("Error in analyze_schema:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 

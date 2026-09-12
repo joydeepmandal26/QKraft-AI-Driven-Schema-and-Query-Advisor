@@ -23,6 +23,9 @@ export default function QueryAdvisor({ schemaContent }: { schemaContent: string 
                 body: JSON.stringify({ query: userMsg, schema_content: schemaContent })
             });
             const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || 'Error connecting to advisor.');
+            }
             setMessages(prev => [...prev, { role: 'assistant', text: data.optimized_sql }]);
         } catch (error) {
             console.error(error);
