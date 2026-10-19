@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QKraft - AI-Driven Schema Auto-Optimizer & Performance Benchmark Engine</title>
+  <meta name="description" content="AI-Driven Schema Auto-Optimizer & Performance Benchmark Engine with Spring Boot and PostgreSQL">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Top Header with Navigation Buttons -->
+    <header class="header">
+      <div class="brand">
+        <h1>QKraft</h1>
+        <p>AI-Driven Schema Auto-Optimizer &amp; Performance Benchmark Engine</p>
+      </div>
+
+      <div class="navActions">
+        <button 
+          type="button" 
+          class="btnPrimary" 
+          id="btnCreateNewSchema"
+          title="Start with a fresh schema in memory"
+        >
+          Create New Schema
+        </button>
+        <button 
+          type="button" 
+          class="btnSecondary" 
+          id="btnWorkWithOldSchema"
+          title="Load a previously saved schema"
+        >
+          Work with Old Schema
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main">
+      <!-- Top Metrics Dashboard -->
+      <div class="metricsContainer" id="topMetricsContainer">
+        <!-- 1. SCHEMA TEST SCORE -->
+        <div class="metricCard cardGlowCyan" id="cardTestScore">
+          <div class="metricHeader">
+            <span class="metricLabel">Schema Test Score</span>
+            
+          </div>
+          <div class="metricValue" id="metricTestScoreVal">
+            100 <span class="metricUnit">/ 100</span>
+          </div>
+          <div class="metricSubtext" id="metricTestScoreSubtext">
+            <span style="color: #34d399; font-weight: 600;">100% Production-Ready</span>
+          </div>
+        </div>
+
+        <!-- 2. AVG. PERFORMANCE GAIN -->
+        <div class="metricCard cardGlowGreen" id="cardAvgGain">
+          <div class="metricHeader">
+            <span class="metricLabel">Avg. Performance Gain</span>
+            
+          </div>
+          <div class="metricValue emptyValue" id="metricAvgGainVal">
+            --% <span class="metricUnit">gain</span>
+          </div>
+          <div class="metricSubtext" id="metricAvgGainSubtext">
+            Awaiting execution
+          </div>
+        </div>
+
+        <!-- 3. TOTAL EXECUTION TIME SAVED -->
+        <div class="metricCard cardGlowBlue" id="cardTimeSaved">
+          <div class="metricHeader">
+            <span class="metricLabel">Total Execution Time Saved</span>
+            
+          </div>
+          <div class="metricValue emptyValue" id="metricTimeSavedVal">
+            -- ms <span class="metricUnit">saved</span>
+          </div>
+          <div class="metricSubtext" id="metricTimeSavedSubtext">
+            Awaiting execution
+          </div>
+        </div>
+
+        <!-- 4. ACTIVE SCHEMA -->
+        <div class="metricCard cardGlowPurple" id="cardActiveSchema">
+          <div class="metricHeader">
+            <span class="metricLabel">Active Schema</span>
+            
+          </div>
+          <div class="metricValue" id="metricActiveSchemaName" style="font-size: 1.25rem; word-break: break-word;">
+            Active Workspace
+          </div>
+          <div class="metricSubtext">
+            <span class="badgeLive" id="metricSchemaLiveBadge">
+              <span class="liveDot"></span>
+              <span id="metricLiveText">In Memory</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 5. QUERIES EXECUTED -->
+        <div class="metricCard cardGlowAmber" id="cardQueriesExecuted">
+          <div class="metricHeader">
+            <span class="metricLabel">Queries Executed</span>
+            
+          </div>
+          <div class="metricValue" id="metricQueryCountVal">
+            0 <span class="metricUnit">runs</span>
+          </div>
+          <div class="metricSubtext">
+            Scoped to current schema
+          </div>
+        </div>
+      </div>
+
+      <!-- Connected Action Layout -->
+      <div class="columns">
+        <!-- Left Column: Schema Visualizer + Recommended Schema & SQL Diagram -->
+        <div class="leftColumn">
+          <!-- SchemaVisualizer Component -->
+          <div class="visualizerContainer">
+            <div class="visualizerHeader">
+              <div class="titleGroup">
+                <h2>Schema Input</h2>
+                <span class="badge">DDL Parser</span>
+              </div>
+            </div>
+
+            <div class="nameInputGroup">
+              <label class="nameLabel" for="schemaNameInput">
+                Schema Name:
+              </label>
+              <input
+                type="text"
+                id="schemaNameInput"
+                class="nameInput"
+                placeholder="Enter a name for this schema (e.g. Billing Core, User Profiles, Analytics)..."
+                value="Production Orders Schema"
+              />
+            </div>
+
+            <textarea 
+              id="schemaDdlTextarea"
+              class="textarea"
+              rows="11"
+              spellcheck="false"
+              placeholder="Paste your PostgreSQL / ANSI DDL schema here...
+Example:
+CREATE TABLE users (
+    id SERIAL,
+    email VARCHAR(255),
+    created_at TIMESTAMP
+);"
+            >CREATE TABLE users (
+    id INT,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    created_at TIMESTAMP
+);
+
+CREATE TABLE orders (
+    order_id INT,
+    user_id INT,
+    total_amount NUMERIC(10, 2),
+    status VARCHAR(50),
+    created_at TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    item_id INT,
+    order_id INT,
+    product_name VARCHAR(100),
+    price NUMERIC(10, 2),
+    quantity INT
+);</textarea>
+
+            <div class="actions">
+              <span class="hint">
+                Submitting automatically generates the optimized schema directly.
+              </span>
+              <button type="button" class="button" id="btnParseAutoOptimize">
+                Parse &amp; Auto-Optimize
+              </button>
+            </div>
+          </div>
+
+          <!-- RecommendedSchema Component -->
+          <div class="recContainer" id="recommendedSchemaContainer">
+            <div class="recHeader">
+              <div class="titleGroup">
+                <h2>Recommended Schema</h2>
+                <span class="recBadge" id="recScoreBadge" style="display:none;">
+                  Score: 100/100 • Auto-Optimized
+                </span>
+              </div>
+              <div class="recActions">
+                <button type="button" class="copyBtn" id="btnExportReport" style="display:none;" title="Download Migration SQL & Markdown Audit Report">
+                  Export Audit Report
+                </button>
+                <button type="button" class="copyBtn" id="btnCopySql" style="display:none;" title="Copy SQL to clipboard">
+                  Copy SQL
+                </button>
+                <button type="button" class="executeBtn" id="btnExecuteSchema" disabled>
+                  Execute Schema
+                </button>
+              </div>
+            </div>
+
+            <!-- Optimal Banner (shown when optimal) -->
+            <div class="optimalBanner" id="optimalBanner" style="display:none;">
+              <div class="optimalBannerHeader">
+                <span>Schema is Already Fully Optimized (Score: 100/100)</span>
+              </div>
+              <p>
+                Your input schema already has all necessary Primary Keys, Foreign Key relationships, and B-Tree Indexes in place. No structural schema rewrites are needed.
+              </p>
+              <div style="margin-top: 0.65rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">
+                  Production-Ready: Tables and mock data are active in the database sandbox.
+                </span>
+                <button
+                  type="button"
+                  id="btnScrollToAdvisor"
+                  style="
+                    background: linear-gradient(135deg, #3b82f6, #6366f1);
+                    border: none;
+                    color: #ffffff;
+                    border-radius: 4px;
+                    padding: 0.3rem 0.75rem;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                  "
+                >
+                  Test Live Queries in Query Optimizer &darr;
+                </button>
+              </div>
+            </div>
+
+            <!-- Feature Pills -->
+            <div class="featurePills" id="recFeaturePills" style="display:none;">
+              <span class="pill">Primary Keys</span>
+              <span class="pill">Foreign Keys</span>
+              <span class="pill">Performance Indexes</span>
+              <span class="pill">Integrity Constraints</span>
+            </div>
+
+            <!-- Optimizing Placeholder Spinner -->
+            <div class="placeholder" id="recOptimizingPlaceholder" style="display:none;">
+              <div class="spinner"></div>
+              <p>Directly generating optimized schema with performance indexes, primary keys, and constraints...</p>
+            </div>
+
+            <!-- Initial Empty State Placeholder -->
+            <div class="placeholder" id="recInitialPlaceholder">
+              <p>
+                Enter your schema name and paste your SQL DDL in the Schema Input, then click "Parse &amp; Auto-Optimize".
+              </p>
+            </div>
+
+            <!-- Execution Success Banner -->
+            <div class="executionBanner" id="recExecutionBanner" style="display:none;">
+              <div class="bannerLeft">
+                <span id="recExecutionMsgText">Schema successfully executed into DB sandbox.</span>
+              </div>
+              <span style="font-size: 0.75rem; opacity: 0.85;">Mock data generated</span>
+            </div>
+
+            <!-- Error Banner -->
+            <div class="errorBanner" id="recErrorBanner" style="display:none;">
+              <span id="recErrorText">Error</span>
+            </div>
+
+            <!-- Code Block with Recommended SQL -->
+            <div class="codeContainer" id="recCodeContainer" style="display:none;">
+              <div class="codeHeader">
+                <span>PostgreSQL / ANSI DDL (Auto-Optimized)</span>
+                <span id="recCodeLineCount">0 lines</span>
+              </div>
+              <pre class="codeBlock"><code id="recCodeBlockContent"></code></pre>
+            </div>
+
+            <!-- SqlDiagram Container -->
+            <div class="diagramContainer" id="sqlDiagramContainer" style="display:none;">
+              <div class="header">
+                <div class="titleGroup">
+                  <h3 style="font-size: 1.15rem; color: #ffffff; font-weight: 600; margin: 0;">SQL Relational Diagram</h3>
+                  <span class="badge" id="diagramTableCountBadge">0 Tables</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: #94a3b8;">
+                  <div style="display: flex; align-items: center; gap: 0.3rem;">
+                    <span class="badgePk">PK</span>
+                    <span>Primary Key</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.3rem;">
+                    <span class="badgeFk">FK</span>
+                    <span>Foreign Key</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.3rem;">
+                    <span class="badgeIdx">IDX</span>
+                    <span>Indexed</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Grid of Table Cards -->
+              <div class="diagramCanvas" id="diagramCanvasGrid"></div>
+
+              <!-- Relations Box -->
+              <div class="relationsBox" id="diagramRelationsBox" style="display:none;">
+                <div class="relationsTitle">
+                  Foreign Key Relationships &amp; Join Paths
+                </div>
+                <div class="relationPillList" id="diagramRelationPills"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Performance Rater + Query Advisor + Query History -->
+        <div class="rightColumn">
+          <!-- PerformanceRater Component -->
+          <div class="raterContainer">
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none;">
+              <div class="titleGroup">
+                <h2 style="font-size: 1.2rem; color: #ffffff; margin: 0; font-weight: 600;">Performance Rater</h2>
+                <span id="raterScoreBadge" style="display:none;"></span>
+              </div>
+              <button type="button" class="raterButton" id="btnRaterRescan">
+                Re-Scan
+              </button>
+            </div>
+
+            <div class="results" id="raterResults" style="display:none;">
+              <!-- Bottlenecks list or Perfect Card rendered dynamically -->
+              <div id="raterContent"></div>
+            </div>
+          </div>
+
+          <!-- QueryAdvisor Component -->
+          <div class="advisorContainer" id="query-advisor-section">
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none;">
+              <div class="titleGroup">
+                <h2 style="font-size: 1.35rem; color: #ffffff; margin: 0; font-weight: 600;">Query Optimizer &amp; Execution</h2>
+                <span class="badge">Schema-Aware</span>
+              </div>
+              <button type="button" class="clearHeaderBtn" id="btnClearChat" style="display:none;" title="Clear conversation history">
+                Clear Chat
+              </button>
+            </div>
+
+            <!-- Quick Prompts Chips -->
+            <div class="quickPrompts">
+              <button type="button" class="chip quick-chip" data-prompt="Fetch top active customers and order totals">
+                Fetch top active customers and order totals
+              </button>
+              <button type="button" class="chip quick-chip" data-prompt="Filter recent completed transactions">
+                Filter recent completed transactions
+              </button>
+              <button type="button" class="chip quick-chip" data-prompt="Join orders with items on status">
+                Join orders with items on status
+              </button>
+            </div>
+
+            <!-- Chat Window -->
+            <div class="chatWindow" id="advisorChatWindow">
+              <div class="placeholder" id="advisorEmptyPlaceholder">
+                <p>Ask for any query or analysis. Every query is directly optimized against the active schema's indexes, constraints, and joins.</p>
+              </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="chatInputArea">
+              <form class="inputForm" id="advisorChatForm">
+                <input 
+                  type="text" 
+                  class="chatInput" 
+                  id="advisorQueryInput" 
+                  placeholder="Ask for an optimized query (e.g. Find completed orders for user 5)..."
+                />
+                <button type="submit" class="sendBtn" id="btnSendAdvisorQuery">
+                  Send
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- QueryHistory Component -->
+          <div class="historyContainer" id="queryHistoryContainer" style="display:none;">
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none;">
+              <div class="titleGroup">
+                <h2 style="font-size: 1.15rem; color: #ffffff; margin: 0; font-weight: 600;">Schema Query History</h2>
+                <span class="badge" id="historySchemaBadge">Schema #--</span>
+              </div>
+              <span id="historyRecordCount" style="font-size: 0.8rem; color: #94a3b8;">0 records</span>
+            </div>
+
+            <div id="historyLoading" style="display:none; color: #94a3b8; font-size: 0.85rem;">Refreshing history...</div>
+            <div id="historyEmptyState" class="emptyState" style="padding: 1.5rem 0.5rem; text-align: center;">
+              <p style="color: #94a3b8; font-size: 0.85rem;">No queries executed on this schema yet.</p>
+              <p style="margin-top: 0.35rem; color: #64748b; font-size: 0.8rem;">
+                Run an optimized query in Query Advisor to see execution statistics recorded here.
+              </p>
+            </div>
+            <div class="historyList" id="historyItemsList" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal for "Work with Old Schema" -->
+    <div class="modalOverlay" id="oldSchemaModal" style="display:none;">
+      <div class="modal" id="oldSchemaModalCard">
+        <div class="modalHeader">
+          <h2>Saved Database Schemas</h2>
+          <button class="closeBtn" id="btnCloseOldSchemaModal" aria-label="Close">&times;</button>
+        </div>
+        <div class="modalBody">
+          <div id="modalLoading" style="text-align: center; color: #94a3b8;">Loading schemas...</div>
+          <div id="modalError" style="display:none; color: #ef4444;"></div>
+          <div id="modalEmptyState" class="emptyState" style="display:none;">
+            <p>No previously saved schemas found in database.</p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #64748b;">
+              Use "Create New Schema" to define and execute your first schema!
+            </p>
+          </div>
+          <div class="schemaList" id="modalSchemaList" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

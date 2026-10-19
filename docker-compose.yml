@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qkraft-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: qkraft
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: system
+    ports:
+      - "5432:5432"
+    volumes:
+      - qkraft_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d qkraft"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./springboot-backend
+      dockerfile: Dockerfile
+    container_name: qkraft-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8000
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/qkraft
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: system
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: qkraft-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      PORT: 3000
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  qkraft_pgdata:

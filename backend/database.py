@@ -1,14 +1,19 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from dotenv import load_dotenv
 
-# For development, we'll use SQLite if Postgres isn't readily available, 
-# but the architecture will be ready for Postgres.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./qkraft.db"
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
+load_dotenv()
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+# We're using Postgres now instead of SQLite.
+# Update the DATABASE_URL in your .env file with your actual Postgres credentials.
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    "postgresql://postgres:password@localhost:5432/qkraft"
 )
+
+# Removed connect_args={"check_same_thread": False} as it is only needed for SQLite
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

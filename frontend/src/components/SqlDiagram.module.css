@@ -1,0 +1,227 @@
+.container {
+    background-color: #15151c;
+    border: 1px solid #282836;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.titleGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.titleGroup h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.badge {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.badgePk {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.badgeFk {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.badgeIdx {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+.diagramCanvas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    padding: 0.75rem 0;
+}
+
+.tableCard {
+    background: #1c1c24;
+    border: 1px solid #2e2e3e;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.tableCard:hover {
+    border-color: #6366f1;
+    transform: translateY(-2px);
+}
+
+.tableHeader {
+    background: linear-gradient(135deg, #242432, #1e1e28);
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2e2e3e;
+}
+
+.tableName {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.rowCount {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    background: #15151c;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid #2a2a35;
+}
+
+.columnList {
+    display: flex;
+    flex-direction: column;
+    padding: 0.4rem 0;
+}
+
+.columnRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background-color 0.15s;
+}
+
+.columnRow:last-child {
+    border-bottom: none;
+}
+
+.columnRow:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.columnLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.columnName {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    color: #e2e8f0;
+}
+
+.columnRight {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.columnType {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+.relationsBox {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #121217;
+    border: 1px dashed #2d2d3d;
+    border-radius: 6px;
+}
+
+.relationsTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.relationPillList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.relationPill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.73rem;
+    background: #1e1e28;
+    color: #cbd5e1;
+    border: 1px solid #323242;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.relationArrow {
+    color: #60a5fa;
+}
