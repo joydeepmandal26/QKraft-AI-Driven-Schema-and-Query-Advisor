@@ -43,17 +43,30 @@ public class QueryController {
         }
 
         try {
-            // Auto-initialize sandbox in PostgreSQL if not already created
-            if (schemaId != null && !sandboxExecutionService.isSandboxInitialized(schemaId)) {
-                schemaRepository.findById(schemaId).ifPresent(rec -> {
-                    String ddl = rec.getOptimizedContent() != null ? rec.getOptimizedContent() : rec.getContent();
-                    try {
-                        sandboxExecutionService.executeAndPopulateSandbox(schemaId, ddl);
-                    } catch (Exception ignored) {}
-                });
+            String ddl = request.getOptimizedSchema() != null && !request.getOptimizedSchema().trim().isEmpty()
+                    ? request.getOptimizedSchema()
+                    : request.getSchemaContent();
+
+            if (schemaId != null && (ddl == null || ddl.trim().isEmpty())) {
+                var recOpt = schemaRepository.findById(schemaId);
+                if (recOpt.isPresent()) {
+                    var rec = recOpt.get();
+                    ddl = rec.getOptimizedContent() != null ? rec.getOptimizedContent() : rec.getContent();
+                }
             }
 
-            QueryExecuteResponse resp = sandboxExecutionService.runQueryInSandbox(schemaId, sql, request.getUnoptimizedSql());
+            if (schemaId == null) {
+                schemaId = 1L;
+            }
+
+            // Auto-initialize sandbox in PostgreSQL if not already created
+            if (!sandboxExecutionService.isSandboxInitialized(schemaId) && ddl != null && !ddl.trim().isEmpty()) {
+                try {
+                    sandboxExecutionService.executeAndPopulateSandbox(schemaId, ddl);
+                } catch (Exception ignored) {}
+            }
+
+            QueryExecuteResponse resp = sandboxExecutionService.runQueryInSandbox(schemaId, sql, request.getUnoptimizedSql(), ddl);
 
             // Save to query history
             QueryHistoryRecord history = new QueryHistoryRecord();

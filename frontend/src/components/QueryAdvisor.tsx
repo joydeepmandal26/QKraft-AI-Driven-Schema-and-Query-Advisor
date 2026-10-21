@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import styles from './QueryAdvisor.module.css';
 import { safeFetchJson } from '@/lib/api';
 
@@ -52,11 +52,38 @@ interface QueryAdvisorProps {
     onQueryExecuted: (res: QueryExecutionResult) => void;
 }
 
-const QUICK_PROMPTS = [
-    'Fetch top active customers and order totals',
-    'Filter recent completed transactions',
-    'Join orders with items on status'
-];
+interface ParsedTable {
+    name: string;
+    columns: string[];
+}
+
+function extractSchemaTables(ddl: string): ParsedTable[] {
+    if (!ddl) return [];
+    const tables: ParsedTable[] = [];
+    const tableRegex = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)\s*\(([\s\S]*?)\)(?:;|$)/gi;
+    let match;
+    while ((match = tableRegex.exec(ddl)) !== null) {
+        const tblName = match[1].trim();
+        const body = match[2];
+        const cols: string[] = [];
+        body.split(',').forEach(part => {
+            const trimmed = part.trim();
+            if (trimmed &&
+                !trimmed.toUpperCase().startsWith('PRIMARY') &&
+                !trimmed.toUpperCase().startsWith('FOREIGN') &&
+                !trimmed.toUpperCase().startsWith('CONSTRAINT') &&
+                !trimmed.toUpperCase().startsWith('KEY') &&
+                !trimmed.toUpperCase().startsWith('CHECK')) {
+                const colName = trimmed.split(/\s+/)[0]?.trim();
+                if (colName && !colName.includes('(') && !colName.includes(')')) {
+                    cols.push(colName);
+                }
+            }
+        });
+        tables.push({ name: tblName, columns: cols });
+    }
+    return tables;
+}
 
 export default function QueryAdvisor({
     schemaContent,
@@ -68,6 +95,46 @@ export default function QueryAdvisor({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const activeTables = useMemo(() => {
+        return extractSchemaTables(optimizedSchema || schemaContent);
+    }, [optimizedSchema, schemaContent]);
+
+    const primaryTable = activeTables.length > 0 ? activeTables[0].name : '';
+    const primaryCols = activeTables.length > 0 ? activeTables[0].columns : [];
+
+    const dynamicQuickPrompts = useMemo(() => {
+        if (activeTables.length === 0) {
+            return [
+                'Enter schema DDL above first',
+                'SELECT * FROM your_table LIMIT 10',
+                'Filter records by index condition'
+            ];
+        }
+        const t0 = activeTables[0];
+        const searchCol = t0.columns.find(c => /address|city|location/i.test(c)) ||
+                          t0.columns.find(c => /name|title|emp|student/i.test(c)) ||
+                          (t0.columns.length > 1 ? t0.columns[1] : t0.columns[0]);
+        const pkCol = t0.columns[0] || 'id';
+
+        const prompts = [
+            `SELECT * FROM ${t0.name} LIMIT 10`
+        ];
+
+        if (searchCol && searchCol !== pkCol) {
+            prompts.push(`Filter ${t0.name} WHERE ${searchCol} ILIKE '%Mumbai%'`);
+        } else {
+            prompts.push(`SELECT ${t0.columns.slice(0, 3).join(', ')} FROM ${t0.name}`);
+        }
+
+        if (activeTables.length > 1) {
+            prompts.push(`Join ${activeTables[0].name} with ${activeTables[1].name}`);
+        } else {
+            prompts.push(`Sort ${t0.name} by ${pkCol} DESC`);
+        }
+
+        return prompts;
+    }, [activeTables]);
 
     const handleSend = async (promptToSend?: string) => {
         const textQuery = promptToSend || query;
@@ -119,22 +186,19 @@ export default function QueryAdvisor({
     };
 
     const handleExecuteQuery = async (msgIndex: number, sql: string, unoptSql?: string) => {
-        if (!schemaId) {
-            alert('Please click "Execute Schema" first to create the DB sandbox tables.');
-            return;
-        }
-
-        setMessages(prev => prev.map((m, idx) => idx === msgIndex ? { ...m, isExecuting: true } : m));
+        setMessages(prev => prev.map((m, idx) => idx === msgIndex ? { ...m, isExecuting: true, executionError: undefined } : m));
 
         try {
             const data = await safeFetchJson('/api/query/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    schema_id: schemaId,
+                    schema_id: schemaId || 1,
                     sql_query: sql,
                     unoptimized_sql: unoptSql,
-                    user_prompt: query || 'Optimized Schema Query'
+                    user_prompt: query || 'Optimized Schema Query',
+                    schema_content: schemaContent,
+                    optimized_schema: optimizedSchema || schemaContent
                 })
             });
 
@@ -192,7 +256,7 @@ export default function QueryAdvisor({
             </div>
 
             <div className={styles.quickPrompts}>
-                {QUICK_PROMPTS.map((p, i) => (
+                {dynamicQuickPrompts.map((p, i) => (
                     <button
                         key={i}
                         type="button"
@@ -366,15 +430,30 @@ export default function QueryAdvisor({
                                         </div>
                                     </div>
 
-                                    {/* DB Result Set Table */}
+                                    {/* DB Result Set Table with Indian Dummy Records */}
                                     <div className={styles.resultsTableBox}>
                                         <div className={styles.tableHeaderBar}>
-                                            <span>DB Result Set</span>
-                                            <span>{exec.row_count} rows returned</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <span style={{ fontWeight: 600, color: '#e2e8f0' }}>Live Database Records</span>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.15rem 0.5rem',
+                                                    borderRadius: '4px',
+                                                    background: 'rgba(16, 185, 129, 0.15)',
+                                                    color: '#34d399',
+                                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                                    fontWeight: 600
+                                                }}>
+                                                    Indian Dummy Dataset Loaded
+                                                </span>
+                                            </div>
+                                            <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                                                {exec.row_count} records returned
+                                            </span>
                                         </div>
                                         <div className={styles.tableWrapper}>
                                             {exec.rows.length === 0 ? (
-                                                <p style={{ padding: '0.75rem 1rem', color: '#94a3b8', margin: 0, fontSize: '0.8rem' }}>
+                                                <p style={{ padding: '0.85rem 1rem', color: '#94a3b8', margin: 0, fontSize: '0.82rem' }}>
                                                     Query executed successfully. 0 rows returned.
                                                 </p>
                                             ) : (
@@ -390,7 +469,9 @@ export default function QueryAdvisor({
                                                         {exec.rows.map((row, rIdx) => (
                                                             <tr key={rIdx}>
                                                                 {row.map((val, cellIdx) => (
-                                                                    <td key={cellIdx}>{String(val)}</td>
+                                                                    <td key={cellIdx} style={cellIdx === 0 ? { color: '#38bdf8', fontWeight: 600 } : {}}>
+                                                                        {val === null || val === undefined ? 'NULL' : String(val)}
+                                                                    </td>
                                                                 ))}
                                                             </tr>
                                                         ))}
@@ -419,7 +500,7 @@ export default function QueryAdvisor({
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
-                    placeholder="eg: select * from Employees;"
+                    placeholder={primaryTable ? `eg: SELECT * FROM ${primaryTable};` : "eg: SELECT * FROM your_schema_table;"}
                     disabled={(!schemaContent && !optimizedSchema) || loading}
                 />
                 {(messages.length > 0 || query.trim().length > 0) && (

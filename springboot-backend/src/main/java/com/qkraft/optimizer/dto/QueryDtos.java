@@ -239,6 +239,12 @@ public class QueryDtos {
         @JsonProperty("user_prompt")
         private String userPrompt;
 
+        @JsonProperty("schema_content")
+        private String schemaContent;
+
+        @JsonProperty("optimized_schema")
+        private String optimizedSchema;
+
         public Long getSchemaId() { return schemaId; }
         public void setSchemaId(Long schemaId) { this.schemaId = schemaId; }
 
@@ -250,6 +256,12 @@ public class QueryDtos {
 
         public String getUserPrompt() { return userPrompt; }
         public void setUserPrompt(String userPrompt) { this.userPrompt = userPrompt; }
+
+        public String getSchemaContent() { return schemaContent; }
+        public void setSchemaContent(String schemaContent) { this.schemaContent = schemaContent; }
+
+        public String getOptimizedSchema() { return optimizedSchema; }
+        public void setOptimizedSchema(String optimizedSchema) { this.optimizedSchema = optimizedSchema; }
     }
 
     public static class QueryExecuteResponse {

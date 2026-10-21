@@ -409,13 +409,17 @@
 }
 
 .dataTable td {
-    padding: 0.45rem 0.75rem;
+    padding: 0.5rem 0.85rem;
     border-bottom: 1px solid #1a1a24;
     color: #e2e8f0;
 }
 
+.dataTable tbody tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
 .dataTable tr:hover td {
-    background-color: #171722;
+    background-color: rgba(56, 189, 248, 0.08);
 }
 
 .inputArea {

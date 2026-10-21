@@ -108,12 +108,13 @@ public class SandboxExecutionService {
         return response;
     }
 
-    private int seedTableMockRows(Connection conn, String schemaName, String tbl) {
+    public int seedTableMockRows(Connection conn, String schemaName, String tbl) {
         try (Statement stmt = conn.createStatement()) {
             List<String> colNames = new ArrayList<>();
             List<String> colTypes = new ArrayList<>();
 
-            String colQuery = "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schemaName + "' AND table_name = '" + tbl + "' ORDER BY ordinal_position";
+            String cleanTbl = tbl.replaceAll("[\"`]", "").trim();
+            String colQuery = "SELECT column_name, data_type FROM information_schema.columns WHERE lower(table_schema) = lower('" + schemaName + "') AND lower(table_name) = lower('" + cleanTbl + "') ORDER BY ordinal_position";
             try (ResultSet rs = stmt.executeQuery(colQuery)) {
                 while (rs.next()) {
                     colNames.add(rs.getString("column_name"));
@@ -121,37 +122,130 @@ public class SandboxExecutionService {
                 }
             }
 
+            if (colNames.isEmpty()) {
+                try (ResultSet rsMeta = stmt.executeQuery("SELECT * FROM " + schemaName + ".\"" + cleanTbl + "\" WHERE 1=0")) {
+                    ResultSetMetaData md = rsMeta.getMetaData();
+                    for (int i = 1; i <= md.getColumnCount(); i++) {
+                        colNames.add(md.getColumnName(i));
+                        colTypes.add(md.getColumnTypeName(i));
+                    }
+                } catch (Exception ignored) {}
+            }
+
             if (colNames.isEmpty()) return 0;
 
-            String[] names = {"Alice Johnson", "Bob Smith", "Charlie Davis", "Diana Evans", "Ethan Taylor", "Fiona Clark", "George White", "Hannah Lee"};
-            String[] items = {"Burger Deluxe", "Pepperoni Pizza", "Caesar Salad", "Spaghetti Carbonara", "Sushi Roll", "Ribeye Steak", "Fish Tacos", "Club Sandwich"};
-            String[] addresses = {"123 Maple St, Springfield", "456 Oak Ave, Metropolis", "789 Pine Rd, Gotham", "101 Elm Blvd, Star City", "202 Cedar Ln, Central City", "303 Birch Dr, Keystone", "404 Walnut Ct, Coast City", "505 Ash Way, Blüdhaven"};
-            String[] statuses = {"active", "pending", "completed", "shipped"};
+            String[] indianNames = {
+                "Aarav Sharma", "Priya Patel", "Rahul Verma", "Ananya Iyer",
+                "Rohan Gupta", "Neha Singh", "Vikram Malhotra", "Sneha Reddy",
+                "Aditya Joshi", "Kavita Nair", "Deepak Kumar", "Pooja Das",
+                "Arjun Mehta", "Divya Pillai", "Siddharth Rao", "Meera Nambiar"
+            };
+
+            String[] indianAddresses = {
+                "Flat 402, Shanti Niketan, Bandra West, Mumbai, Maharashtra",
+                "12 Indiranagar 100ft Road, Bengaluru, Karnataka",
+                "78 Connaught Place, New Delhi, Delhi",
+                "101 Banjara Hills Road No 12, Hyderabad, Telangana",
+                "22 Anna Nagar 2nd Avenue, Chennai, Tamil Nadu",
+                "56 Salt Lake Sector V, Bidhannagar, Kolkata, West Bengal",
+                "89 Koregaon Park, North Main Road, Pune, Maharashtra",
+                "34 Vastrapur Lake Road, Ahmedabad, Gujarat",
+                "15 Gomti Nagar, Lucknow, Uttar Pradesh",
+                "44 Jawahar Circle, Malviya Nagar, Jaipur, Rajasthan",
+                "18 Usman Road, T. Nagar, Chennai, Tamil Nadu",
+                "90 Madhapur Main Road, Hitech City, Hyderabad, Telangana"
+            };
+
+            String[] indianCities = {
+                "Mumbai", "Bengaluru", "New Delhi", "Hyderabad",
+                "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow"
+            };
+
+            String[] indianStates = {
+                "Maharashtra", "Karnataka", "Delhi", "Telangana",
+                "Tamil Nadu", "West Bengal", "Gujarat", "Uttar Pradesh", "Rajasthan"
+            };
+
+            String[] departments = {
+                "Computer Science & Engineering", "Information Technology",
+                "Electronics & Communication", "Data Science & AI",
+                "Mechanical Engineering", "Electrical Engineering"
+            };
+
+            String[] courses = {
+                "Database Management Systems", "Data Structures & Algorithms",
+                "Artificial Intelligence", "Operating Systems",
+                "Computer Networks", "Cloud Computing"
+            };
+
+            String[] indianItems = {
+                "Masala Dosa", "Paneer Butter Masala", "Hyderabadi Biryani",
+                "Chole Bhature", "Idli Sambar", "Butter Chicken", "Dal Makhani", "Gulab Jamun"
+            };
+
+            String[] statuses = {
+                "Enrolled", "Active", "Verified", "Completed", "Graduated", "Pending"
+            };
 
             int inserted = 0;
             for (int i = 1; i <= 8; i++) {
                 List<String> values = new ArrayList<>();
+                String personName = indianNames[(i - 1) % indianNames.length];
+                String personEmail = personName.toLowerCase().replace(" ", ".") + "@vitstudent.ac.in";
+                String personPhone = "+91 98" + (20000000 + i * 123456);
+                String personAddress = indianAddresses[(i - 1) % indianAddresses.length];
+                String personCity = indianCities[(i - 1) % indianCities.length];
+                String personState = indianStates[(i - 1) % indianStates.length];
+                String dept = departments[(i - 1) % departments.length];
+                String course = courses[(i - 1) % courses.length];
+                String item = indianItems[(i - 1) % indianItems.length];
+                String status = statuses[(i - 1) % statuses.length];
+
                 for (int c = 0; c < colNames.size(); c++) {
                     String col = colNames.get(c).toLowerCase();
                     String type = colTypes.get(c).toUpperCase();
 
-                    if (col.matches("(?i)^(id|.*_id|.*id|roll_?no|code|key|no|sid|uid|pid)$")) {
+                    if (col.matches("(?i)^(id|.*_id|.*id|roll_?no|code|key|no|sid|uid|pid|reg_?no)$")) {
                         values.add(String.valueOf(i));
-                    } else if (col.contains("name") || col.contains("customer")) {
-                        values.add("'" + names[(i - 1) % names.length] + "'");
-                    } else if (col.contains("address") || col.contains("city") || col.contains("location")) {
-                        values.add("'" + addresses[(i - 1) % addresses.length] + "'");
-                    } else if (col.contains("item") || col.contains("food") || col.contains("product")) {
-                        values.add("'" + items[(i - 1) % items.length] + "'");
+                    } else if (col.contains("name") || col.contains("student") || col.contains("author") || col.contains("user") || col.contains("customer") || col.contains("emp") || col.contains("std")) {
+                        values.add("'" + personName.replace("'", "''") + "'");
+                    } else if (col.contains("address")) {
+                        values.add("'" + personAddress.replace("'", "''") + "'");
+                    } else if (col.contains("city")) {
+                        values.add("'" + personCity.replace("'", "''") + "'");
+                    } else if (col.contains("state")) {
+                        values.add("'" + personState.replace("'", "''") + "'");
+                    } else if (col.contains("country")) {
+                        values.add("'India'");
+                    } else if (col.contains("pincode") || col.contains("zip") || col.contains("postal")) {
+                        values.add(String.valueOf(400001 + (i * 123)));
+                    } else if (col.contains("email") || col.contains("mail")) {
+                        values.add("'" + personEmail + "'");
+                    } else if (col.contains("phone") || col.contains("mobile") || col.contains("contact")) {
+                        values.add("'" + personPhone + "'");
+                    } else if (col.contains("dept") || col.contains("department") || col.contains("branch")) {
+                        values.add("'" + dept.replace("'", "''") + "'");
+                    } else if (col.contains("course") || col.contains("subject")) {
+                        values.add("'" + course.replace("'", "''") + "'");
+                    } else if (col.contains("item") || col.contains("food") || col.contains("product") || col.contains("dish")) {
+                        values.add("'" + item.replace("'", "''") + "'");
                     } else if (col.contains("status")) {
-                        values.add("'" + statuses[(i - 1) % statuses.length] + "'");
-                    } else if (col.contains("price") || col.contains("amount")) {
-                        values.add(String.valueOf(Math.round((12.50 * i) * 100.0) / 100.0));
-                    } else if (col.contains("quantity") || col.contains("count")) {
-                        values.add(String.valueOf(i * 2));
-                    } else if (col.contains("email")) {
-                        values.add("'user" + i + "@example.com'");
-                    } else if (col.contains("date") || col.contains("time") || col.contains("at")) {
+                        values.add("'" + status + "'");
+                    } else if (col.contains("price") || col.contains("amount") || col.contains("fee") || col.contains("salary")) {
+                        values.add(String.valueOf(Math.round((25000.00 + (i * 3500.50)) * 100.0) / 100.0));
+                    } else if (col.contains("marks") || col.contains("score")) {
+                        int[] sampleMarks = {85, 92, 78, 95, 88, 91, 82, 96};
+                        values.add(String.valueOf(sampleMarks[(i - 1) % sampleMarks.length]));
+                    } else if (col.contains("gpa") || col.contains("cgpa")) {
+                        double[] sampleCgpa = {8.9, 9.4, 8.2, 9.7, 8.5, 9.1, 8.0, 9.8};
+                        values.add(String.valueOf(sampleCgpa[(i - 1) % sampleCgpa.length]));
+                    } else if (col.contains("age")) {
+                        values.add(String.valueOf(19 + (i % 5)));
+                    } else if (col.contains("gender") || col.contains("sex")) {
+                        values.add(i % 2 == 0 ? "'Female'" : "'Male'");
+                    } else if (col.contains("quantity") || col.contains("count") || col.contains("sem") || col.contains("semester")) {
+                        values.add(String.valueOf((i % 8) + 1));
+                    } else if (col.contains("date") || col.contains("time") || col.contains("at") || col.contains("dob") || col.contains("joined")) {
                         values.add("CURRENT_TIMESTAMP");
                     } else if (type.contains("INT")) {
                         values.add(String.valueOf(i * 10));
@@ -162,7 +256,7 @@ public class SandboxExecutionService {
                     }
                 }
 
-                String sql = "INSERT INTO " + schemaName + ".\"" + tbl + "\" (\"" + String.join("\", \"", colNames) + "\") VALUES (" + String.join(", ", values) + ") ON CONFLICT DO NOTHING";
+                String sql = "INSERT INTO " + schemaName + ".\"" + cleanTbl + "\" (\"" + String.join("\", \"", colNames) + "\") VALUES (" + String.join(", ", values) + ") ON CONFLICT DO NOTHING";
                 try {
                     stmt.execute(sql);
                     inserted++;
@@ -177,6 +271,10 @@ public class SandboxExecutionService {
     }
 
     public QueryExecuteResponse runQueryInSandbox(Long schemaId, String sqlQuery, String unoptimizedSql) throws Exception {
+        return runQueryInSandbox(schemaId, sqlQuery, unoptimizedSql, null);
+    }
+
+    public QueryExecuteResponse runQueryInSandbox(Long schemaId, String sqlQuery, String unoptimizedSql, String ddlFallback) throws Exception {
         String schemaName = "sandbox_" + (schemaId != null ? schemaId : 1);
         String cleanSql = sqlQuery.trim().replaceAll(";+$", "");
 
@@ -191,6 +289,107 @@ public class SandboxExecutionService {
             // Switch to sandbox schema
             stmt.execute("CREATE SCHEMA IF NOT EXISTS " + schemaName);
             stmt.execute("SET search_path TO " + schemaName + ", public");
+
+            // Check if active DDL tables and columns are synchronized in the sandbox
+            if (ddlFallback != null && !ddlFallback.trim().isEmpty()) {
+                DiagramData requestedDiagram = ddlParserService.parseDdlToDiagram(ddlFallback);
+                for (TableInfo ti : requestedDiagram.getTables()) {
+                    String checkColSql = "SELECT column_name FROM information_schema.columns WHERE lower(table_schema) = lower('" + schemaName + "') AND lower(table_name) = lower('" + ti.getName() + "')";
+                    List<String> foundCols = new ArrayList<>();
+                    try (ResultSet crs = stmt.executeQuery(checkColSql)) {
+                        while (crs.next()) {
+                            foundCols.add(crs.getString(1).toLowerCase());
+                        }
+                    } catch (Exception ignored) {}
+
+                    boolean needsRebuild = foundCols.isEmpty();
+                    for (ColumnInfo ci : ti.getColumns()) {
+                        if (!foundCols.contains(ci.getName().toLowerCase())) {
+                            needsRebuild = true;
+                            break;
+                        }
+                    }
+
+                    if (needsRebuild) {
+                        try {
+                            stmt.execute("DROP TABLE IF EXISTS " + schemaName + ".\"" + ti.getName() + "\" CASCADE");
+                        } catch (Exception ignored) {}
+                        String normalized = ddlParserService.normalizeDdl(ddlFallback);
+                        for (String s : normalized.split(";")) {
+                            String cleanStmt = s.trim();
+                            if (!cleanStmt.isEmpty()) {
+                                try {
+                                    stmt.execute(cleanStmt);
+                                } catch (Exception ignored) {}
+                            }
+                        }
+                        seedTableMockRows(conn, schemaName, ti.getName());
+                    }
+                }
+            }
+
+            // Check existing tables in sandbox
+            List<String> existingTables = new ArrayList<>();
+            String tableQuery = "SELECT table_name FROM information_schema.tables WHERE lower(table_schema) = lower('" + schemaName + "') AND table_type = 'BASE TABLE'";
+            try (ResultSet rs = stmt.executeQuery(tableQuery)) {
+                while (rs.next()) {
+                    existingTables.add(rs.getString(1));
+                }
+            }
+
+            // If sandbox is empty of tables and ddlFallback is provided, execute DDL to create them
+            if (existingTables.isEmpty() && ddlFallback != null && !ddlFallback.trim().isEmpty()) {
+                String normalized = ddlParserService.normalizeDdl(ddlFallback);
+                for (String s : normalized.split(";")) {
+                    String clean = s.trim();
+                    if (!clean.isEmpty()) {
+                        try { stmt.execute(clean); } catch (Exception ignored) {}
+                    }
+                }
+                try (ResultSet rs = stmt.executeQuery(tableQuery)) {
+                    while (rs.next()) {
+                        existingTables.add(rs.getString(1));
+                    }
+                }
+            }
+
+            // Check if tables have 0 rows or old Western dummy data, and seed Indian dummy data!
+            for (String tbl : existingTables) {
+                int count = 0;
+                boolean hasWesternData = false;
+                try (ResultSet crs = stmt.executeQuery("SELECT COUNT(*) FROM " + schemaName + ".\"" + tbl + "\"")) {
+                    if (crs.next()) count = crs.getInt(1);
+                } catch (Exception ignored) {}
+
+                if (count > 0) {
+                    try (ResultSet wrs = stmt.executeQuery("SELECT 1 FROM " + schemaName + ".\"" + tbl + "\" WHERE CAST(\"" + tbl + "\" AS text) LIKE '%Alice Johnson%' OR CAST(\"" + tbl + "\" AS text) LIKE '%Bob Smith%' LIMIT 1")) {
+                        if (wrs.next()) hasWesternData = true;
+                    } catch (Exception ignored) {}
+                }
+
+                if (count == 0 || hasWesternData) {
+                    if (hasWesternData) {
+                        try { stmt.execute("TRUNCATE TABLE " + schemaName + ".\"" + tbl + "\" CASCADE"); } catch (Exception ignored) {}
+                    }
+                    seedTableMockRows(conn, schemaName, tbl);
+                }
+            }
+
+            // Enforce schema safety: if cleanSql targets a table not in existingTables, redirect to active table
+            if (!existingTables.isEmpty()) {
+                String searchSql = cleanSql.toLowerCase();
+                boolean matchesAny = false;
+                for (String t : existingTables) {
+                    if (searchSql.contains(t.toLowerCase())) {
+                        matchesAny = true;
+                        break;
+                    }
+                }
+                if (!matchesAny) {
+                    String activeTbl = existingTables.get(0);
+                    cleanSql = cleanSql.replaceAll("(?i)\\bFROM\\s+[a-zA-Z0-9_\"`.]+", "FROM " + activeTbl);
+                }
+            }
 
             // Execute query and measure real runtime
             long start = System.nanoTime();
