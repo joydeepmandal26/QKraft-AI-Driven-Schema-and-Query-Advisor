@@ -187,6 +187,8 @@ public class SandboxExecutionService {
                 "Enrolled", "Active", "Verified", "Completed", "Graduated", "Pending"
             };
 
+            String[] deptPool = {"Dept 1", "Dept 2", "Dept 1", "Dept 3", "Dept 2", "Dept 1", "Dept 4", "Dept 2", "Dept 3", "Dept 1"};
+
             int inserted = 0;
             for (int i = 1; i <= 8; i++) {
                 List<String> values = new ArrayList<>();
@@ -196,7 +198,7 @@ public class SandboxExecutionService {
                 String personAddress = indianAddresses[(i - 1) % indianAddresses.length];
                 String personCity = indianCities[(i - 1) % indianCities.length];
                 String personState = indianStates[(i - 1) % indianStates.length];
-                String dept = departments[(i - 1) % departments.length];
+                String dept = deptPool[(i * 3 + 1) % deptPool.length];
                 String course = courses[(i - 1) % courses.length];
                 String item = indianItems[(i - 1) % indianItems.length];
                 String status = statuses[(i - 1) % statuses.length];
@@ -224,7 +226,11 @@ public class SandboxExecutionService {
                     } else if (col.contains("phone") || col.contains("mobile") || col.contains("contact")) {
                         values.add("'" + personPhone + "'");
                     } else if (col.contains("dept") || col.contains("department") || col.contains("branch")) {
-                        values.add("'" + dept.replace("'", "''") + "'");
+                        if (type.contains("INT") || type.contains("NUM")) {
+                            values.add(String.valueOf(1 + ((i * 3 + 1) % 4)));
+                        } else {
+                            values.add("'" + dept + "'");
+                        }
                     } else if (col.contains("course") || col.contains("subject")) {
                         values.add("'" + course.replace("'", "''") + "'");
                     } else if (col.contains("item") || col.contains("food") || col.contains("product") || col.contains("dish")) {
@@ -240,7 +246,8 @@ public class SandboxExecutionService {
                         double[] sampleCgpa = {8.9, 9.4, 8.2, 9.7, 8.5, 9.1, 8.0, 9.8};
                         values.add(String.valueOf(sampleCgpa[(i - 1) % sampleCgpa.length]));
                     } else if (col.contains("age")) {
-                        values.add(String.valueOf(19 + (i % 5)));
+                        int[] realisticAges = {20, 19, 21, 20, 22, 19, 21, 20};
+                        values.add(String.valueOf(realisticAges[(i - 1) % realisticAges.length]));
                     } else if (col.contains("gender") || col.contains("sex")) {
                         values.add(i % 2 == 0 ? "'Female'" : "'Male'");
                     } else if (col.contains("quantity") || col.contains("count") || col.contains("sem") || col.contains("semester")) {
@@ -353,22 +360,37 @@ public class SandboxExecutionService {
                 }
             }
 
-            // Check if tables have 0 rows or old Western dummy data, and seed Indian dummy data!
+            // Check if tables have 0 rows or old Western dummy data / val_department, and seed legit Indian data!
             for (String tbl : existingTables) {
                 int count = 0;
-                boolean hasWesternData = false;
+                boolean hasOldOrWesternData = false;
                 try (ResultSet crs = stmt.executeQuery("SELECT COUNT(*) FROM " + schemaName + ".\"" + tbl + "\"")) {
                     if (crs.next()) count = crs.getInt(1);
                 } catch (Exception ignored) {}
 
                 if (count > 0) {
-                    try (ResultSet wrs = stmt.executeQuery("SELECT 1 FROM " + schemaName + ".\"" + tbl + "\" WHERE CAST(\"" + tbl + "\" AS text) LIKE '%Alice Johnson%' OR CAST(\"" + tbl + "\" AS text) LIKE '%Bob Smith%' LIMIT 1")) {
-                        if (wrs.next()) hasWesternData = true;
+                    try (ResultSet checkRs = stmt.executeQuery("SELECT * FROM " + schemaName + ".\"" + tbl + "\" LIMIT 8")) {
+                        ResultSetMetaData cmd = checkRs.getMetaData();
+                        while (checkRs.next()) {
+                            for (int c = 1; c <= cmd.getColumnCount(); c++) {
+                                Object obj = checkRs.getObject(c);
+                                if (obj != null) {
+                                    String s = obj.toString();
+                                    if (s.contains("Alice") || s.contains("Bob") || s.contains("Fiona") || s.contains("Ethan") ||
+                                        s.contains("Diana") || s.contains("Charlie") || s.contains("val_department") ||
+                                        s.contains("val_") || s.contains("Maple St") || s.contains("Springfield")) {
+                                        hasOldOrWesternData = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (hasOldOrWesternData) break;
+                        }
                     } catch (Exception ignored) {}
                 }
 
-                if (count == 0 || hasWesternData) {
-                    if (hasWesternData) {
+                if (count == 0 || hasOldOrWesternData) {
+                    if (hasOldOrWesternData) {
                         try { stmt.execute("TRUNCATE TABLE " + schemaName + ".\"" + tbl + "\" CASCADE"); } catch (Exception ignored) {}
                     }
                     seedTableMockRows(conn, schemaName, tbl);

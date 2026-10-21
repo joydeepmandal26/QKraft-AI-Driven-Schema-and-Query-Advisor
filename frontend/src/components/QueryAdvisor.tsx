@@ -449,23 +449,10 @@ export default function QueryAdvisor({
                                         </div>
                                     </div>
 
-                                    {/* DB Result Set Table with Indian Dummy Records */}
+                                    {/* DB Result Set Table */}
                                     <div className={styles.resultsTableBox}>
                                         <div className={styles.tableHeaderBar}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                                <span style={{ fontWeight: 600, color: '#e2e8f0' }}>Live Database Records</span>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    padding: '0.15rem 0.5rem',
-                                                    borderRadius: '4px',
-                                                    background: 'rgba(16, 185, 129, 0.15)',
-                                                    color: '#34d399',
-                                                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                                                    fontWeight: 600
-                                                }}>
-                                                    Indian Dummy Dataset Loaded
-                                                </span>
-                                            </div>
+                                            <span style={{ fontWeight: 600, color: '#e2e8f0' }}>Live Database Records</span>
                                             <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontFamily: 'monospace' }}>
                                                 {exec.row_count} records returned
                                             </span>
