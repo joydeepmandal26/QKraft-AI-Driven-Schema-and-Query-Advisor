@@ -77,12 +77,14 @@ export default function RecommendedSchema({
         }
     };
 
+    const isOptimalState = Boolean(isAlreadyOptimized || testScore === 100);
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
                     <h2>Recommended Schema</h2>
-                    {isAlreadyOptimized ? (
+                    {isOptimalState ? (
                         <span className={styles.badge} style={{ background: 'rgba(16, 185, 129, 0.18)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#34d399' }}>
                             100/100 Optimal
                         </span>
@@ -114,7 +116,7 @@ export default function RecommendedSchema({
                 </div>
             </div>
 
-            {isAlreadyOptimized && (
+            {isOptimalState && (
                 <div className={styles.optimalBanner}>
                     <div className={styles.optimalBannerHeader}>
                         <span>Schema is Already Fully Optimized (Score: 100/100)</span>

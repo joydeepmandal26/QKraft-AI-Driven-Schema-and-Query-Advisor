@@ -20,6 +20,14 @@ public class SchemaOptimizerService {
 
         String normalized = ddlParserService.normalizeDdl(ddl);
 
+        // Discover all defined tables in the schema
+        Set<String> definedTables = new HashSet<>();
+        Pattern tblStartPattern = Pattern.compile("(?i)CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([a-zA-Z0-9_]+)");
+        Matcher tblStartMatcher = tblStartPattern.matcher(normalized);
+        while (tblStartMatcher.find()) {
+            definedTables.add(tblStartMatcher.group(1).trim().toLowerCase());
+        }
+
         // Collect existing indexes
         Set<String> existingIndexes = new HashSet<>();
         Pattern idxPattern = Pattern.compile("(?i)CREATE\\s+(?:UNIQUE\\s+)?INDEX\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([a-zA-Z0-9_]+)\\s+ON\\s+([a-zA-Z0-9_]+)\\s*\\(([^)]+)\\)");
@@ -55,17 +63,36 @@ public class SchemaOptimizerService {
                     String colName = colM.group(1).trim();
                     String colLower = colName.toLowerCase();
 
+                    // Check for FK candidates only if the candidate parent table actually exists in definedTables
                     if ((colLower.endsWith("_id") || colLower.equals("user_id") || colLower.equals("order_id")) && !clean.toUpperCase().contains("PRIMARY KEY")) {
-                        boolean hasFk = Pattern.compile("(?i)FOREIGN\\s+KEY\\s*\\(\\s*" + Pattern.quote(colName) + "\\s*\\)").matcher(body).find()
-                                || Pattern.compile("(?i)" + Pattern.quote(colName) + "\\s+[^,]*\\bREFERENCES\\b").matcher(body).find();
-                        if (!hasFk) {
-                            problems.add(String.format("Column '%s.%s' is missing an explicit FOREIGN KEY constraint for referential integrity.", tblName, colName));
+                        String targetBase = colLower.endsWith("_id") ? colLower.substring(0, colLower.length() - 3) : colLower;
+                        String parentTable = null;
+                        if (definedTables.contains(targetBase) && !targetBase.equals(tblLower)) {
+                            parentTable = targetBase;
+                        } else if (definedTables.contains(targetBase + "s") && !(targetBase + "s").equals(tblLower)) {
+                            parentTable = targetBase + "s";
+                        } else if (definedTables.contains(targetBase + "es") && !(targetBase + "es").equals(tblLower)) {
+                            parentTable = targetBase + "es";
+                        } else if (targetBase.equals("dept") && definedTables.contains("department")) {
+                            parentTable = "department";
+                        } else if (targetBase.equals("dept") && definedTables.contains("departments")) {
+                            parentTable = "departments";
                         }
 
-                        if (!existingIndexes.contains(tblLower + "." + colLower)) {
-                            problems.add(String.format("Missing B-Tree INDEX on foreign key '%s(%s)' (slows down JOIN queries).", tblName, colName));
+                        // ONLY if a parent table actually exists in the schema DDL, require FK constraint:
+                        if (parentTable != null) {
+                            boolean hasFk = Pattern.compile("(?i)FOREIGN\\s+KEY\\s*\\(\\s*" + Pattern.quote(colName) + "\\s*\\)").matcher(body).find()
+                                    || Pattern.compile("(?i)" + Pattern.quote(colName) + "\\s+[^,]*\\bREFERENCES\\b").matcher(body).find();
+                            if (!hasFk) {
+                                problems.add(String.format("Column '%s.%s' is missing an explicit FOREIGN KEY constraint referencing '%s' for referential integrity.", tblName, colName, parentTable));
+                            }
                         }
-                    } else if (Arrays.asList("status", "email", "category", "type", "created_at", "name", "address").contains(colLower)
+
+                        // Index check: whether FK or standalone identifier, it needs a B-Tree index if not already indexed
+                        if (!existingIndexes.contains(tblLower + "." + colLower)) {
+                            problems.add(String.format("Missing B-Tree INDEX on key/lookup column '%s(%s)' (slows down WHERE clauses and JOINs).", tblName, colName));
+                        }
+                    } else if (Arrays.asList("status", "email", "category", "type", "created_at").contains(colLower)
                             && !clean.toUpperCase().contains("PRIMARY KEY")) {
                         if (!existingIndexes.contains(tblLower + "." + colLower)) {
                             problems.add(String.format("Missing B-Tree INDEX on search/filter column '%s(%s)' (slows down WHERE clauses).", tblName, colName));

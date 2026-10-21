@@ -137,15 +137,22 @@ def detect_schema_problems(ddl: str) -> List[str]:
                 
                 # Check for foreign key candidates (e.g. user_id, customer_id, warehouse_id)
                 if col_lower.endswith('_id') and not re.search(r'\bPRIMARY\s+KEY\b', line_clean, re.IGNORECASE):
-                    # Check if foreign key constraint or REFERENCES is defined in body
-                    has_fk = bool(re.search(rf'FOREIGN\s+KEY\s*\(\s*{re.escape(col_name)}\s*\)', body, re.IGNORECASE) or 
-                                 re.search(rf'{re.escape(col_name)}\s+[^,]*\bREFERENCES\b', body, re.IGNORECASE))
-                    if not has_fk:
-                        problems.append(f"Column '{tbl_name}.{col_name}' is missing an explicit FOREIGN KEY constraint for referential integrity.")
+                    target_candidate = col_lower[:-3]
+                    parent_exists = (
+                        target_candidate in table_names or
+                        (target_candidate + "s") in table_names or
+                        (target_candidate + "es") in table_names or
+                        (target_candidate == "dept" and ("department" in table_names or "departments" in table_names))
+                    )
+                    if parent_exists:
+                        has_fk = bool(re.search(rf'FOREIGN\s+KEY\s*\(\s*{re.escape(col_name)}\s*\)', body, re.IGNORECASE) or 
+                                     re.search(rf'{re.escape(col_name)}\s+[^,]*\bREFERENCES\b', body, re.IGNORECASE))
+                        if not has_fk:
+                            problems.append(f"Column '{tbl_name}.{col_name}' is missing an explicit FOREIGN KEY constraint for referential integrity.")
                     
-                    # Check if index exists on this FK
+                    # Check if index exists on this FK / key
                     if (tbl_lower, col_lower) not in existing_indexes:
-                        problems.append(f"Missing B-Tree INDEX on foreign key '{tbl_name}({col_name})' (slows down JOIN queries).")
+                        problems.append(f"Missing B-Tree INDEX on key/lookup column '{tbl_name}({col_name})' (slows down WHERE clauses and JOINs).")
                         
                 # Check for filter/search columns (status, email, category, type, created_at)
                 elif col_lower in ('status', 'email', 'category', 'type', 'created_at') and not re.search(r'\bPRIMARY\s+KEY\b', line_clean, re.IGNORECASE):

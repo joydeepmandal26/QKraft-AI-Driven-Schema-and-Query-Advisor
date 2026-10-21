@@ -114,10 +114,19 @@ public class SchemaController {
         }
 
         List<String> problems = schemaOptimizerService.detectSchemaProblems(content);
-        boolean isOptimal = problems.isEmpty();
+        String optimizedDdl = schemaOptimizerService.optimizeSchemaEngine(content);
+
+        // Normalize both original and optimized to compare if structural changes were introduced
+        String normOrig = content.replaceAll("(?m)^\\s*--.*$", "").replaceAll("\\s+", " ").trim();
+        String normOpt = optimizedDdl.replaceAll("(?m)^\\s*--.*$", "").replaceAll("\\s+", " ").trim();
+        boolean noStructuralChanges = normOrig.equalsIgnoreCase(normOpt);
+
+        boolean isOptimal = problems.isEmpty() || noStructuralChanges;
+        if (noStructuralChanges) {
+            problems.clear();
+        }
         int score = isOptimal ? 100 : Math.max(100 - (problems.size() * 18), 15);
 
-        String optimizedDdl = schemaOptimizerService.optimizeSchemaEngine(content);
         BenchmarkMetrics benchmark = schemaOptimizerService.calculateSchemaBenchmark(content, optimizedDdl, isOptimal, score);
 
         RecommendResponse resp = new RecommendResponse();

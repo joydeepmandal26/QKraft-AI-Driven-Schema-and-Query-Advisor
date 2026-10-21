@@ -203,11 +203,27 @@ public class SandboxExecutionService {
                 String item = indianItems[(i - 1) % indianItems.length];
                 String status = statuses[(i - 1) % statuses.length];
 
+                String[] jobTitles = {
+                    "Software Engineer", "Data Analyst", "Product Manager", "DevOps Engineer",
+                    "Frontend Specialist", "Database Administrator", "Tech Lead", "QA Specialist"
+                };
+
                 for (int c = 0; c < colNames.size(); c++) {
                     String col = colNames.get(c).toLowerCase();
                     String type = colTypes.get(c).toUpperCase();
 
-                    if (col.matches("(?i)^(id|.*_id|.*id|roll_?no|code|key|no|sid|uid|pid|reg_?no)$")) {
+                    if (col.contains("dept") || col.contains("department") || col.contains("branch")) {
+                        if (type.contains("INT") || type.contains("NUM")) {
+                            values.add(String.valueOf(1 + ((i * 3 + 1) % 4)));
+                        } else {
+                            values.add("'" + dept + "'");
+                        }
+                    } else if (col.contains("job") || col.contains("role") || col.contains("designation") || col.contains("position") || col.contains("title")) {
+                        values.add("'" + jobTitles[(i - 1) % jobTitles.length] + "'");
+                    } else if (col.contains("price") || col.contains("amount") || col.contains("fee") || col.contains("salary") || col.contains("wage") || col.contains("pay")) {
+                        double[] sampleSalaries = {65000.00, 72000.00, 85000.00, 94000.00, 58000.00, 110000.00, 78000.00, 92000.00};
+                        values.add(String.valueOf(sampleSalaries[(i - 1) % sampleSalaries.length]));
+                    } else if (c == 0 || col.matches("(?i)^(id|.*_id|.*id|roll_?no|code|key|no|sid|uid|pid|reg_?no)$")) {
                         values.add(String.valueOf(i));
                     } else if (col.contains("name") || col.contains("student") || col.contains("author") || col.contains("user") || col.contains("customer") || col.contains("emp") || col.contains("std")) {
                         values.add("'" + personName.replace("'", "''") + "'");
@@ -225,20 +241,12 @@ public class SandboxExecutionService {
                         values.add("'" + personEmail + "'");
                     } else if (col.contains("phone") || col.contains("mobile") || col.contains("contact")) {
                         values.add("'" + personPhone + "'");
-                    } else if (col.contains("dept") || col.contains("department") || col.contains("branch")) {
-                        if (type.contains("INT") || type.contains("NUM")) {
-                            values.add(String.valueOf(1 + ((i * 3 + 1) % 4)));
-                        } else {
-                            values.add("'" + dept + "'");
-                        }
                     } else if (col.contains("course") || col.contains("subject")) {
                         values.add("'" + course.replace("'", "''") + "'");
                     } else if (col.contains("item") || col.contains("food") || col.contains("product") || col.contains("dish")) {
                         values.add("'" + item.replace("'", "''") + "'");
                     } else if (col.contains("status")) {
                         values.add("'" + status + "'");
-                    } else if (col.contains("price") || col.contains("amount") || col.contains("fee") || col.contains("salary")) {
-                        values.add(String.valueOf(Math.round((25000.00 + (i * 3500.50)) * 100.0) / 100.0));
                     } else if (col.contains("marks") || col.contains("score")) {
                         int[] sampleMarks = {85, 92, 78, 95, 88, 91, 82, 96};
                         values.add(String.valueOf(sampleMarks[(i - 1) % sampleMarks.length]));
@@ -259,7 +267,8 @@ public class SandboxExecutionService {
                     } else if (type.contains("NUMERIC") || type.contains("REAL") || type.contains("FLOAT") || type.contains("DOUBLE")) {
                         values.add(String.valueOf(i * 9.99));
                     } else {
-                        values.add("'val_" + col + "_" + i + "'");
+                        String cleanLabel = Character.toUpperCase(col.charAt(0)) + col.substring(1).replace("_", " ");
+                        values.add("'" + cleanLabel + " " + i + "'");
                     }
                 }
 
