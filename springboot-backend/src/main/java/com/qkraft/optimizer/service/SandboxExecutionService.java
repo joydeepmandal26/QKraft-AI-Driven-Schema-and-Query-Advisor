@@ -424,29 +424,38 @@ public class SandboxExecutionService {
 
             // Execute query and measure real runtime
             long start = System.nanoTime();
-            try (ResultSet rs = stmt.executeQuery(cleanSql)) {
-                long end = System.nanoTime();
-                optimizedTimeMs = Math.round(((end - start) / 1_000_000.0) * 1000.0) / 1000.0;
+            boolean hasResultSet = stmt.execute(cleanSql);
+            long end = System.nanoTime();
+            optimizedTimeMs = Math.round(((end - start) / 1_000_000.0) * 1000.0) / 1000.0;
 
-                ResultSetMetaData md = rs.getMetaData();
-                int colCount = md.getColumnCount();
-                for (int i = 1; i <= colCount; i++) {
-                    columns.add(md.getColumnLabel(i));
-                }
-
-                int rCount = 0;
-                while (rs.next() && rCount < 50) {
-                    List<Object> row = new ArrayList<>();
+            if (hasResultSet) {
+                try (ResultSet rs = stmt.getResultSet()) {
+                    ResultSetMetaData md = rs.getMetaData();
+                    int colCount = md.getColumnCount();
                     for (int i = 1; i <= colCount; i++) {
-                        row.add(rs.getObject(i));
+                        columns.add(md.getColumnLabel(i));
                     }
-                    rows.add(row);
-                    rCount++;
+
+                    int rCount = 0;
+                    while (rs.next() && rCount < 50) {
+                        List<Object> row = new ArrayList<>();
+                        for (int i = 1; i <= colCount; i++) {
+                            row.add(rs.getObject(i));
+                        }
+                        rows.add(row);
+                        rCount++;
+                    }
                 }
+            } else {
+                int affected = stmt.getUpdateCount();
+                columns.add("operation");
+                columns.add("rows_affected");
+                rows.add(Arrays.asList("SUCCESS", affected));
             }
 
-            // Real PostgreSQL EXPLAIN ANALYZE
-            try (ResultSet planRs = stmt.executeQuery("EXPLAIN (ANALYZE, FORMAT TEXT) " + cleanSql)) {
+            // Real PostgreSQL EXPLAIN (use ANALYZE for SELECT, safe static plan for DML to avoid mutating sandbox twice)
+            String explainCmd = (cleanSql.trim().toUpperCase().startsWith("SELECT") ? "EXPLAIN (ANALYZE, FORMAT TEXT) " : "EXPLAIN (FORMAT TEXT) ") + cleanSql;
+            try (ResultSet planRs = stmt.executeQuery(explainCmd)) {
                 while (planRs.next()) {
                     String line = planRs.getString(1);
                     if (line != null && !line.trim().isEmpty()) {
@@ -454,7 +463,7 @@ public class SandboxExecutionService {
                     }
                 }
             } catch (Exception ex) {
-                explainPlan.add("PostgreSQL Index Scan Evaluated (Execution time: " + optimizedTimeMs + " ms)");
+                explainPlan.add("PostgreSQL Plan Evaluated (Execution time: " + optimizedTimeMs + " ms)");
             }
         } catch (Exception e) {
             System.err.println("PostgreSQL query execution notice: " + e.getMessage());

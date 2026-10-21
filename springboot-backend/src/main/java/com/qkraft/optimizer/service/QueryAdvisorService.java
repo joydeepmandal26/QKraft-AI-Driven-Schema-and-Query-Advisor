@@ -75,6 +75,19 @@ public class QueryAdvisorService {
         }
 
         String colsStr = String.join(", ", colNames.subList(0, Math.min(colNames.size(), 5)));
+
+        boolean isExplicitDelete = Pattern.compile("(?i)^\\s*DELETE\\b").matcher(userQuery).find();
+        boolean isNaturalDelete = Pattern.compile("(?i)^(delete|remove|purge|drop\\s+rows?)\\b").matcher(userQuery).find();
+        boolean isDelete = isExplicitDelete || isNaturalDelete;
+
+        boolean isExplicitUpdate = Pattern.compile("(?i)^\\s*UPDATE\\b").matcher(userQuery).find();
+        boolean isNaturalUpdate = Pattern.compile("(?i)^(update|modify|set|change)\\b").matcher(userQuery).find();
+        boolean isUpdate = isExplicitUpdate || isNaturalUpdate;
+
+        boolean isExplicitInsert = Pattern.compile("(?i)^\\s*INSERT\\b").matcher(userQuery).find();
+        boolean isNaturalInsert = Pattern.compile("(?i)^(insert|add|append)\\b").matcher(userQuery).find();
+        boolean isInsert = isExplicitInsert || isNaturalInsert;
+
         boolean isSelect = Pattern.compile("(?i)^\\s*SELECT\\b").matcher(userQuery).find();
 
         String optimizedSql;
@@ -82,12 +95,112 @@ public class QueryAdvisorService {
         String explanation;
         List<String> techniques = new ArrayList<>();
 
+        final String activePk = pkCol;
+
         // Detect Multi-Table Join Intent
         boolean hasJoinIntent = userQuery.toLowerCase().contains("join") || relations.stream().anyMatch(r ->
                 userQuery.toLowerCase().contains(r.getFromTable().toLowerCase()) && userQuery.toLowerCase().contains(r.getToTable().toLowerCase())
         );
 
-        if (hasJoinIntent && !relations.isEmpty()) {
+        if (isDelete) {
+            // === DELETE OPTIMIZER ===
+            String predicate = "";
+            Matcher whereM = Pattern.compile("(?i)\\bWHERE\\s+(.+?)(?:;|$)", Pattern.DOTALL).matcher(userQuery);
+            if (whereM.find()) {
+                predicate = whereM.group(1).trim();
+            } else {
+                // Check natural language prompt: e.g. "delete from library where author='author6'" or "delete author6"
+                for (String c : colNames) {
+                    if (userQuery.toLowerCase().contains(c.toLowerCase())) {
+                        Matcher valM = Pattern.compile("(?i)" + Pattern.quote(c) + "\\s*(?:=|is|like|as)?\\s*['\"]?([^'\"\\s;]+)['\"]?").matcher(userQuery);
+                        if (valM.find()) {
+                            predicate = c + " ILIKE '" + valM.group(1) + "'";
+                            break;
+                        }
+                    }
+                }
+                if (predicate.isEmpty()) {
+                    // Extract last token or string literal if any
+                    Matcher litM = Pattern.compile("['\"]([^'\"]+)['\"]").matcher(userQuery);
+                    if (litM.find()) {
+                        String filterCol = colNames.stream().filter(cn -> !cn.equalsIgnoreCase(activePk)).findFirst().orElse(activePk);
+                        predicate = filterCol + " ILIKE '" + litM.group(1) + "'";
+                    } else {
+                        predicate = activePk + " = 1";
+                    }
+                }
+            }
+
+            // SARGable predicate optimization: replace UPPER/LOWER with ILIKE
+            predicate = predicate.replaceAll("(?i)\\bUPPER\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)\\s*=\\s*'([^']*)'", "$1 ILIKE '$2'");
+            predicate = predicate.replaceAll("(?i)\\bLOWER\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)\\s*=\\s*'([^']*)'", "$1 ILIKE '$2'");
+
+            // Align column casing in predicate to active schema
+            for (String cn : colNames) {
+                predicate = predicate.replaceAll("(?i)\\b" + Pattern.quote(cn) + "\\b", cn);
+            }
+
+            optimizedSql = String.format("DELETE FROM %s\nWHERE %s\nRETURNING %s;", targetTable, predicate, colsStr);
+            unoptimizedSql = String.format("DELETE FROM %s WHERE LOWER(%s) = '%s';", targetTable, colNames.get(Math.min(1, colNames.size() - 1)), "sample");
+            explanation = String.format("Optimized DELETE statement for '%s': Enforces SARGable predicate for B-Tree index traversal and appends RETURNING clause to inspect deleted records with 0-roundtrip overhead.", targetTable);
+            techniques.add("B-Tree index-assisted predicate scan on " + targetTable);
+            techniques.add("SARGable ILIKE pattern matching avoiding sequential table scans");
+            techniques.add("0-roundtrip tuple materialization via RETURNING projection");
+        } else if (isUpdate) {
+            // === UPDATE OPTIMIZER ===
+            String setClause = "";
+            String whereClause = "";
+
+            Matcher setM = Pattern.compile("(?i)\\bSET\\s+(.+?)(?:\\bWHERE\\b|;|$)", Pattern.DOTALL).matcher(userQuery);
+            if (setM.find()) {
+                setClause = setM.group(1).trim();
+            } else {
+                String targetCol = colNames.stream().filter(cn -> !cn.equalsIgnoreCase(activePk)).findFirst().orElse(colNames.get(0));
+                setClause = targetCol + " = " + targetCol;
+            }
+
+            Matcher whereM = Pattern.compile("(?i)\\bWHERE\\s+(.+?)(?:;|$)", Pattern.DOTALL).matcher(userQuery);
+            if (whereM.find()) {
+                whereClause = whereM.group(1).trim();
+            } else {
+                whereClause = activePk + " = 1";
+            }
+
+            // Align column casing
+            for (String cn : colNames) {
+                setClause = setClause.replaceAll("(?i)\\b" + Pattern.quote(cn) + "\\b", cn);
+                whereClause = whereClause.replaceAll("(?i)\\b" + Pattern.quote(cn) + "\\b", cn);
+            }
+
+            whereClause = whereClause.replaceAll("(?i)\\bUPPER\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)\\s*=\\s*'([^']*)'", "$1 ILIKE '$2'");
+            whereClause = whereClause.replaceAll("(?i)\\bLOWER\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)\\s*=\\s*'([^']*)'", "$1 ILIKE '$2'");
+
+            optimizedSql = String.format("UPDATE %s\nSET %s\nWHERE %s\nRETURNING %s;", targetTable, setClause, whereClause, colsStr);
+            unoptimizedSql = String.format("UPDATE %s SET %s WHERE LOWER(%s) = '%s';", targetTable, setClause, pkCol, "1");
+            explanation = String.format("Optimized UPDATE statement for '%s': Leverages indexed lookup and appends RETURNING clause for instant state synchronization.", targetTable);
+            techniques.add("Direct B-Tree index seek on " + targetTable + "(" + pkCol + ")");
+            techniques.add("Zero-roundtrip verification via RETURNING clause");
+        } else if (isInsert) {
+            // === INSERT OPTIMIZER ===
+            List<String> insertCols = new ArrayList<>(colNames);
+            List<String> sampleVals = new ArrayList<>();
+            for (int i = 0; i < insertCols.size(); i++) {
+                String cn = insertCols.get(i).toLowerCase();
+                if (cn.contains("id") || cn.matches("(?i).*(no|num|code|key).*")) {
+                    sampleVals.add("99");
+                } else if (cn.contains("price") || cn.contains("salary") || cn.contains("amount") || cn.contains("cost")) {
+                    sampleVals.add("499.00");
+                } else {
+                    sampleVals.add("'Sample Value'");
+                }
+            }
+
+            optimizedSql = String.format("INSERT INTO %s (%s)\nVALUES (%s)\nRETURNING %s;", targetTable, String.join(", ", insertCols), String.join(", ", sampleVals), colsStr);
+            unoptimizedSql = String.format("INSERT INTO %s VALUES (%s);", targetTable, String.join(", ", sampleVals));
+            explanation = String.format("Optimized INSERT statement for '%s': Enforces explicit column projections to protect against schema drift and returns generated tuple keys via RETURNING.", targetTable);
+            techniques.add("Explicit column mapping to guard against future schema alterations");
+            techniques.add("Immediate key materialization via RETURNING clause");
+        } else if (hasJoinIntent && !relations.isEmpty()) {
             RelationInfo rel = relations.get(0);
             for (RelationInfo r : relations) {
                 if (userQuery.toLowerCase().contains(r.getFromTable().toLowerCase()) || userQuery.toLowerCase().contains(r.getToTable().toLowerCase())) {
@@ -224,7 +337,7 @@ public class QueryAdvisorService {
 
             // Detect matching text column for pattern search (e.g. name, address, city)
             Optional<String> textColOpt = colNames.stream()
-                    .filter(c -> c.equalsIgnoreCase("name") || c.equalsIgnoreCase("address") || c.equalsIgnoreCase("city") || c.equalsIgnoreCase("status"))
+                    .filter(c -> c.equalsIgnoreCase("name") || c.equalsIgnoreCase("address") || c.equalsIgnoreCase("city") || c.equalsIgnoreCase("status") || c.equalsIgnoreCase("author"))
                     .findFirst();
 
             if (lower.contains("mumbai") || lower.contains("delhi") || lower.contains("bangalore") || lower.contains("pune")) {
@@ -237,9 +350,9 @@ public class QueryAdvisorService {
                     filter = "WHERE status = 'Active'\n";
                     techniques.add("Filtered on indexed active status");
                 }
-            } else if (lower.contains("top") || lower.contains("high") || lower.contains("score") || lower.contains("marks") || lower.contains("price") || lower.contains("amount")) {
+            } else if (lower.contains("top") || lower.contains("high") || lower.contains("score") || lower.contains("marks") || lower.contains("price") || lower.contains("amount") || lower.contains("salary")) {
                 for (String c : colNames) {
-                    if (c.matches("(?i).*(marks|score|price|amount|total|gpa|cgpa).*")) {
+                    if (c.matches("(?i).*(marks|score|price|amount|total|gpa|cgpa|salary).*")) {
                         orderCol = c;
                         break;
                     }
@@ -336,6 +449,26 @@ public class QueryAdvisorService {
                     "Negative Predicate Overhead (NOT IN)",
                     "NOT IN cannot safely utilize index scans when the candidate column contains NULL values and often degrades into a slow anti-join.",
                     "Rewrite using NOT EXISTS or LEFT JOIN ... WHERE ... IS NULL."
+            ));
+        }
+
+        // 7. Unbounded DELETE (Missing WHERE clause)
+        if (Pattern.compile("(?i)^\\s*DELETE\\s+FROM\\s+[a-zA-Z0-9_\"`.]+\\s*;?\\s*$").matcher(sql).find()) {
+            list.add(new AntiPatternWarning(
+                    "HIGH",
+                    "Unbounded DELETE (Missing WHERE Predicate)",
+                    "Executing DELETE without a WHERE clause will delete all rows from the table, triggering severe table locks and mass dead tuples.",
+                    "Always specify an indexed WHERE condition (e.g. WHERE id = ...) or use TRUNCATE if purging intentionally."
+            ));
+        }
+
+        // 8. Unbounded UPDATE (Missing WHERE clause)
+        if (Pattern.compile("(?i)^\\s*UPDATE\\s+[a-zA-Z0-9_\"`.]+\\s+SET\\s+[^;]+$").matcher(sql).find() && !sql.toUpperCase().contains("WHERE")) {
+            list.add(new AntiPatternWarning(
+                    "HIGH",
+                    "Unbounded UPDATE (Missing WHERE Predicate)",
+                    "Executing UPDATE without a WHERE clause will overwrite the target columns across every single row in the table.",
+                    "Append a targeted WHERE filter leveraging an indexed column (e.g. WHERE id = ...)."
             ));
         }
 
