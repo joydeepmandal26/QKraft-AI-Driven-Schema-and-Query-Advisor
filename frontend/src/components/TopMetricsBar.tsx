@@ -34,7 +34,6 @@ export default function TopMetricsBar({
                 <div className={`${styles.metricCard} ${styles.cardGlowCyan}`}>
                     <div className={styles.metricHeader}>
                         <span className={styles.metricLabel}>Schema Test Score</span>
-                        <span className={styles.metricIcon}>🎯</span>
                     </div>
                     {isMeasuring ? (
                         <div className={styles.metricValue}>
@@ -51,11 +50,11 @@ export default function TopMetricsBar({
                     )}
                     <div className={styles.metricSubtext}>
                         {testScore === 100 ? (
-                            <span style={{ color: '#34d399', fontWeight: 600 }}>🏆 100% Production-Ready</span>
+                            <span style={{ color: '#34d399', fontWeight: 600 }}>100% Production-Ready</span>
                         ) : testScore >= 80 ? (
-                            <span style={{ color: '#60a5fa', fontWeight: 600 }}>⚡ Minor Tweaks Needed</span>
+                            <span style={{ color: '#60a5fa', fontWeight: 600 }}>Minor Tweaks Needed</span>
                         ) : (
-                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>⚠️ Needs Optimization</span>
+                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>Needs Optimization</span>
                         )}
                     </div>
                 </div>
@@ -64,7 +63,6 @@ export default function TopMetricsBar({
                 <div className={`${styles.metricCard} ${styles.cardGlowGreen}`}>
                     <div className={styles.metricHeader}>
                         <span className={styles.metricLabel}>Avg. Performance Gain</span>
-                        <span className={styles.metricIcon}>⚡</span>
                     </div>
                     {isMeasuring ? (
                         <div className={styles.metricValue}>
@@ -144,7 +142,6 @@ export default function TopMetricsBar({
                 <div className={`${styles.metricCard} ${styles.cardGlowPurple}`}>
                     <div className={styles.metricHeader}>
                         <span className={styles.metricLabel}>Active Schema</span>
-                        <span className={styles.metricIcon}>📂</span>
                     </div>
                     <div className={styles.metricValue} style={{ fontSize: '1.25rem', wordBreak: 'break-word' }}>
                         {schemaName || 'Active Workspace'}
@@ -161,7 +158,6 @@ export default function TopMetricsBar({
                 <div className={`${styles.metricCard} ${styles.cardGlowAmber}`}>
                     <div className={styles.metricHeader}>
                         <span className={styles.metricLabel}>Queries Executed</span>
-                        <span className={styles.metricIcon}>🚀</span>
                     </div>
                     <div className={styles.metricValue}>
                         {queryCount}

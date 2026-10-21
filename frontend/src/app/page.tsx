@@ -241,7 +241,7 @@ export default function Home() {
             onClick={handleCreateNewSchema}
             title="Start with a fresh schema in memory"
           >
-            <span>➕</span> Create New Schema
+            Create New Schema
           </button>
           <button 
             type="button" 
@@ -249,7 +249,7 @@ export default function Home() {
             onClick={() => setIsOldSchemaModalOpen(true)}
             title="Load a previously saved schema"
           >
-            <span>📂</span> Work with Old Schema
+            Work with Old Schema
           </button>
         </div>
       </header>

@@ -128,7 +128,7 @@ export default function PerformanceComparisonModal({
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
                         <h2 className={styles.title}>
-                            <span>📊</span> Performance Comparison: Optimized vs Non-Optimized
+                            Performance Comparison: Optimized vs Non-Optimized
                         </h2>
                         <p className={styles.subtitle}>
                             Visual benchmark comparing execution latency, disk I/O, and query processing cost
@@ -149,14 +149,14 @@ export default function PerformanceComparisonModal({
                                 className={`${styles.modeBtn} ${viewMode === 'beginner' ? styles.modeBtnActive : ''}`}
                                 onClick={() => setViewMode('beginner')}
                             >
-                                <span>👶</span> Simple (Beginner Friendly)
+                                Simple (Beginner Friendly)
                             </button>
                             <button
                                 type="button"
                                 className={`${styles.modeBtn} ${viewMode === 'technical' ? styles.modeBtnActive : ''}`}
                                 onClick={() => setViewMode('technical')}
                             >
-                                <span>💻</span> Technical Diagnostics
+                                Technical Diagnostics
                             </button>
                         </div>
 
@@ -167,14 +167,14 @@ export default function PerformanceComparisonModal({
                                     className={`${styles.tab} ${tab === 'gain' ? styles.activeTab : ''}`}
                                     onClick={() => setTab('gain')}
                                 >
-                                    <span>⚡</span> Gain
+                                    Gain
                                 </button>
                                 <button
                                     type="button"
                                     className={`${styles.tab} ${tab === 'time' ? styles.activeTab : ''}`}
                                     onClick={() => setTab('time')}
                                 >
-                                    <span>⏱️</span> Time Saved
+                                    Time Saved
                                 </button>
                             </div>
                         )}
@@ -184,18 +184,17 @@ export default function PerformanceComparisonModal({
                     {viewMode === 'beginner' && (
                         <div className={styles.analogyCard}>
                             <div className={styles.analogyHeader}>
-                                <span>💡</span>
                                 <span>How This Works (In Plain English)</span>
                             </div>
                             <div className={styles.analogyGrid}>
                                 <div className={styles.analogyItemSlow}>
-                                    <h4><span>🐢</span> Without Optimization (Slow)</h4>
+                                    <h4>Without Optimization (Slow)</h4>
                                     <p>
                                         Like reading a <strong>1,000-page book page-by-page from start to finish</strong> just to find one person&apos;s phone number. The database has to scan 100% of rows on disk.
                                     </p>
                                 </div>
                                 <div className={styles.analogyItemFast}>
-                                    <h4><span>⚡</span> With QKraft Optimization (Instant)</h4>
+                                    <h4>With QKraft Optimization (Instant)</h4>
                                     <p>
                                         Like flipping straight to the letter &ldquo;R&rdquo; in the <strong>alphabetical Index at the back of the book</strong>. Searches take ~2 milliseconds instead of scanning the whole database!
                                     </p>
@@ -218,7 +217,6 @@ export default function PerformanceComparisonModal({
                             color: '#e2e8f0',
                             fontSize: '0.85rem'
                         }}>
-                            <span style={{ fontSize: '1.25rem' }}>🏆</span>
                             <div>
                                 <strong style={{ color: '#34d399' }}>Input Schema is Already 100% Fully Optimized!</strong>
                                 <p style={{ margin: '0.2rem 0 0 0', color: '#94a3b8', fontSize: '0.8rem' }}>
@@ -254,21 +252,21 @@ export default function PerformanceComparisonModal({
                     {viewMode === 'beginner' && (
                         <div className={styles.beginnerCardsGrid}>
                             <div className={styles.beginnerCard}>
-                                <span className={styles.beginnerCardLabel}>🚀 Speed Boost</span>
+                                <span className={styles.beginnerCardLabel}>Speed Boost</span>
                                 <span className={styles.beginnerCardVal} style={{ color: '#34d399' }}>
                                     {computedOptTotal > 0 ? `${(computedUnoptTotal / Math.max(computedOptTotal, 0.1)).toFixed(1)}x Faster` : 'Instant'}
                                 </span>
                                 <span className={styles.beginnerCardSub}>Compared to raw unindexed tables</span>
                             </div>
                             <div className={styles.beginnerCard}>
-                                <span className={styles.beginnerCardLabel}>⏱️ Delay Saved</span>
+                                <span className={styles.beginnerCardLabel}>Delay Saved</span>
                                 <span className={styles.beginnerCardVal} style={{ color: '#38bdf8' }}>
                                     {effectiveTotalSaved.toFixed(1)} ms
                                 </span>
                                 <span className={styles.beginnerCardSub}>Zero noticeable page-load lag</span>
                             </div>
                             <div className={styles.beginnerCard}>
-                                <span className={styles.beginnerCardLabel}>🌿 Server Workload</span>
+                                <span className={styles.beginnerCardLabel}>Server Workload</span>
                                 <span className={styles.beginnerCardVal} style={{ color: '#a78bfa' }}>
                                     -95% Disk I/O
                                 </span>
@@ -281,16 +279,16 @@ export default function PerformanceComparisonModal({
                     <div className={styles.chartCard}>
                         <div className={styles.chartHeader}>
                             <span className={styles.chartTitle}>
-                                <span>📈</span> {viewMode === 'beginner' ? 'Visual Speed Comparison: Slow vs Instant' : (tab === 'gain' ? 'Query Execution Latency Comparison' : 'Cumulative Time Comparison')}
+                                {viewMode === 'beginner' ? 'Visual Speed Comparison: Slow vs Instant' : (tab === 'gain' ? 'Query Execution Latency Comparison' : 'Cumulative Time Comparison')}
                             </span>
                             <div className={styles.legend}>
                                 <div className={styles.legendItem}>
                                     <div className={styles.legendDotUnopt}></div>
-                                    <span style={{ color: '#ef4444' }}>{viewMode === 'beginner' ? '🐢 Slow (Before)' : 'Non-Optimized Schema'}</span>
+                                    <span style={{ color: '#ef4444' }}>{viewMode === 'beginner' ? 'Slow (Before)' : 'Non-Optimized Schema'}</span>
                                 </div>
                                 <div className={styles.legendItem}>
                                     <div className={styles.legendDotOpt}></div>
-                                    <span style={{ color: '#10b981' }}>{viewMode === 'beginner' ? '⚡ Instant (With QKraft)' : 'Optimized Schema'}</span>
+                                    <span style={{ color: '#10b981' }}>{viewMode === 'beginner' ? 'Instant (With QKraft)' : 'Optimized Schema'}</span>
                                 </div>
                             </div>
                         </div>
@@ -299,7 +297,7 @@ export default function PerformanceComparisonModal({
                         <div className={styles.barComparisonList}>
                             {computedUnoptTotal === 0 ? (
                                 <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: '#94a3b8' }}>
-                                    <p style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#f1f5f9' }}>⏳ No schema benchmark measured yet</p>
+                                    <p style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#f1f5f9' }}>No schema benchmark measured yet</p>
                                     <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Provide or select a schema in the editor to automatically benchmark latency between non-optimized and optimized configurations.</p>
                                 </div>
                             ) : (
@@ -309,7 +307,7 @@ export default function PerformanceComparisonModal({
                                         <div className={styles.barGroupLabel}>
                                             <span>Overall Benchmark Aggregate</span>
                                             <span className={styles.speedupBadge}>
-                                                ⚡ +{effectivePct.toFixed(1)}% Faster ({effectiveTotalSaved.toFixed(1)} ms saved)
+                                                +{effectivePct.toFixed(1)}% Faster ({effectiveTotalSaved.toFixed(1)} ms saved)
                                             </span>
                                         </div>
 
@@ -383,20 +381,19 @@ export default function PerformanceComparisonModal({
                     {viewMode === 'beginner' ? (
                         <div className={styles.plainEnglishBox}>
                             <div className={styles.plainEnglishTitle}>
-                                <span>🎓</span>
                                 <span>Why Is This So Much Faster? (Beginner Breakdown)</span>
                             </div>
                             <ul className={styles.plainEnglishList}>
                                 <li>
-                                    <strong>🔑 Primary Keys Added:</strong>
+                                    <strong>Primary Keys Added:</strong>
                                     <span>Gives every item a unique ID &ldquo;barcode&rdquo;. Searches jump straight to the row in 1 step instead of scanning every single row in the database.</span>
                                 </li>
                                 <li>
-                                    <strong>🔗 Foreign Keys Connected:</strong>
+                                    <strong>Foreign Keys Connected:</strong>
                                     <span>Creates a direct bridge between related tables (like linking orders to customers) so the database doesn&apos;t waste time cross-matching unrelated data.</span>
                                 </li>
                                 <li>
-                                    <strong>⚡ B-Tree Indexes Created:</strong>
+                                    <strong>B-Tree Indexes Created:</strong>
                                     <span>Builds an alphabetical lookup cheat-sheet on important columns (status, email, dates). Searches check the index and skip 95% to 99% of disk blocks!</span>
                                 </li>
                             </ul>
@@ -406,7 +403,7 @@ export default function PerformanceComparisonModal({
                         <div className={styles.chartCard}>
                             <div className={styles.chartHeader}>
                                 <span className={styles.chartTitle}>
-                                    <span>⚖️</span> Architecture &amp; Indexing Diagnostics
+                                    Architecture &amp; Indexing Diagnostics
                                 </span>
                             </div>
                             <table className={styles.featureTable}>

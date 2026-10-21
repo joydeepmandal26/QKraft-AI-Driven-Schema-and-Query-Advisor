@@ -56,7 +56,6 @@ export default function QueryHistory({ schemaId, refreshTrigger }: QueryHistoryP
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
-                    <span>📜</span>
                     <h2>Schema Query History</h2>
                     <span className={styles.badge}>Schema #{schemaId}</span>
                 </div>
@@ -97,14 +96,14 @@ export default function QueryHistory({ schemaId, refreshTrigger }: QueryHistoryP
                                 <div className={styles.itemBottom}>
                                     <div className={styles.metricPills}>
                                         <span className={styles.timePill}>
-                                            ⚡ {item.time_saved_ms} ms Saved (+{item.time_saved_pct}%)
+                                            {item.time_saved_ms} ms Saved (+{item.time_saved_pct}%)
                                         </span>
                                         <span style={{ fontSize: '0.72rem', color: '#94a3b8', alignSelf: 'center' }}>
                                             Opt: {item.optimized_time_ms} ms vs Unopt: {item.unoptimized_time_ms} ms
                                         </span>
                                     </div>
                                     <span style={{ fontSize: '0.75rem', color: item.status === 'SUCCESS' ? '#34d399' : '#ef4444' }}>
-                                        {item.status === 'SUCCESS' ? '✓ Passed' : '✗ Failed'}
+                                        {item.status === 'SUCCESS' ? 'Passed' : 'Failed'}
                                     </span>
                                 </div>
                             </div>

@@ -30,3 +30,4 @@ target/
 *.swo
 .DS_Store
 Thumbs.db
+.neon

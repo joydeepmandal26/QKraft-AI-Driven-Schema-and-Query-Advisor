@@ -42,7 +42,6 @@ export default function SqlDiagram({ diagram }: SqlDiagramProps) {
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.titleGroup}>
-                    <span>📊</span>
                     <h3>SQL Relational Diagram</h3>
                     <span className={styles.badge}>{diagram.tables.length} Tables</span>
                 </div>
@@ -67,7 +66,7 @@ export default function SqlDiagram({ diagram }: SqlDiagramProps) {
                     <div key={`${table.name}-${tIdx}`} className={styles.tableCard}>
                         <div className={styles.tableHeader}>
                             <div className={styles.tableName}>
-                                <span>📋</span> {table.name}
+                                {table.name}
                             </div>
                             <span className={styles.rowCount}>
                                 {table.row_count !== undefined ? `${table.row_count} rows` : 'DB ready'}
@@ -109,7 +108,7 @@ export default function SqlDiagram({ diagram }: SqlDiagramProps) {
             {diagram.relations && diagram.relations.length > 0 && (
                 <div className={styles.relationsBox}>
                     <div className={styles.relationsTitle}>
-                        🔗 Foreign Key Relationships & Join Paths
+                        Foreign Key Relationships & Join Paths
                     </div>
                     <div className={styles.relationPillList}>
                         {diagram.relations.map((rel, idx) => (

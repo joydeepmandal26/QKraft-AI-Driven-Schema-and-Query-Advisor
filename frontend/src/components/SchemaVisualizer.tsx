@@ -48,7 +48,7 @@ export default function SchemaVisualizer({
             {/* User-defined Schema Name input */}
             <div className={styles.nameInputGroup}>
                 <label className={styles.nameLabel}>
-                    <span>🏷️</span> Schema Name:
+                    Schema Name:
                 </label>
                 <input
                     type="text"
@@ -69,20 +69,21 @@ CREATE TABLE users (
     id SERIAL,
     email VARCHAR(255),
     created_at TIMESTAMP
-);"
+);
+"
                 rows={11}
             />
 
             <div className={styles.actions}>
                 <span className={styles.hint}>
-                    ⚡ Submitting automatically generates the optimized schema directly.
+                    Submitting automatically generates the optimized schema directly.
                 </span>
                 <button 
                     className={styles.button} 
                     onClick={handleSubmit}
                     disabled={!schema.trim() || loading}
                 >
-                    {loading ? 'Optimizing...' : '🚀 Parse & Auto-Optimize'}
+                    {loading ? 'Optimizing...' : 'Parse & Auto-Optimize'}
                 </button>
             </div>
         </div>

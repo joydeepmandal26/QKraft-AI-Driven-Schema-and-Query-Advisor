@@ -53,7 +53,7 @@ export default function OldSchemaModal({ isOpen, onClose, onSelectSchema }: OldS
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <div className={styles.header}>
                     <h2>
-                        <span>📂</span> Saved Database Schemas
+                        Saved Database Schemas
                     </h2>
                     <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
                         &times;
@@ -62,7 +62,7 @@ export default function OldSchemaModal({ isOpen, onClose, onSelectSchema }: OldS
 
                 <div className={styles.body}>
                     {loading && <p style={{ textAlign: 'center', color: '#94a3b8' }}>Loading schemas...</p>}
-                    {error && <p style={{ color: '#ef4444' }}>⚠️ {error}</p>}
+                    {error && <p style={{ color: '#ef4444' }}>{error}</p>}
                     
                     {!loading && schemas.length === 0 && (
                         <div className={styles.emptyState}>
@@ -101,7 +101,7 @@ export default function OldSchemaModal({ isOpen, onClose, onSelectSchema }: OldS
                                                 {s.executed && (
                                                     <>
                                                         <span>•</span>
-                                                        <span style={{ color: '#34d399' }}>⚡ DB Sandbox Ready</span>
+                                                        <span style={{ color: '#34d399' }}>DB Sandbox Ready</span>
                                                     </>
                                                 )}
                                             </div>

@@ -84,7 +84,7 @@ export default function RecommendedSchema({
                     <h2>Recommended Schema</h2>
                     {isAlreadyOptimized ? (
                         <span className={styles.badge} style={{ background: 'rgba(16, 185, 129, 0.18)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#34d399' }}>
-                            🏆 100/100 Optimal
+                            100/100 Optimal
                         </span>
                     ) : (
                         <span className={styles.badge}>
@@ -100,7 +100,7 @@ export default function RecommendedSchema({
                             onClick={handleCopy}
                             title="Copy SQL to clipboard"
                         >
-                            {copied ? '✅ Copied!' : '📋 Copy SQL'}
+                            {copied ? 'Copied!' : 'Copy SQL'}
                         </button>
                     )}
                     <button 
@@ -109,7 +109,7 @@ export default function RecommendedSchema({
                         onClick={handleExecuteSchema} 
                         disabled={(!recommendedSchema && !schemaContent) || executing || isOptimizing}
                     >
-                        {executing ? '⚡ Executing on DB...' : (isExecuted ? '🔄 Re-Execute Schema' : '⚡ Execute Schema')}
+                        {executing ? 'Executing on DB...' : (isExecuted ? 'Re-Execute Schema' : 'Execute Schema')}
                     </button>
                 </div>
             </div>
@@ -117,7 +117,6 @@ export default function RecommendedSchema({
             {isAlreadyOptimized && (
                 <div className={styles.optimalBanner}>
                     <div className={styles.optimalBannerHeader}>
-                        <span>🏆</span>
                         <span>Schema is Already Fully Optimized (Score: 100/100)</span>
                     </div>
                     <p>
@@ -125,7 +124,7 @@ export default function RecommendedSchema({
                     </p>
                     <div style={{ marginTop: '0.65rem', display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 600 }}>
-                            ✅ Production-Ready: Tables and mock data are active in the database sandbox.
+                            Production-Ready: Tables and mock data are active in the database sandbox.
                         </span>
                         <button
                             type="button"
@@ -144,7 +143,7 @@ export default function RecommendedSchema({
                                 gap: '0.3rem'
                             }}
                         >
-                            ⚡ Test Live Queries in Query Optimizer &darr;
+                            Test Live Queries in Query Optimizer &darr;
                         </button>
                     </div>
                 </div>
@@ -152,10 +151,10 @@ export default function RecommendedSchema({
 
             {recommendedSchema && (
                 <div className={styles.featurePills}>
-                    <span className={styles.pill}>🔑 Primary Keys</span>
-                    <span className={styles.pill}>🔗 Foreign Keys</span>
-                    <span className={styles.pill}>⚡ Performance Indexes</span>
-                    <span className={styles.pill}>🛡️ Integrity Constraints</span>
+                    <span className={styles.pill}>Primary Keys</span>
+                    <span className={styles.pill}>Foreign Keys</span>
+                    <span className={styles.pill}>Performance Indexes</span>
+                    <span className={styles.pill}>Integrity Constraints</span>
                 </div>
             )}
 
@@ -178,14 +177,13 @@ export default function RecommendedSchema({
 
             {error && (
                 <div className={styles.errorBanner}>
-                    <span>⚠️ {error}</span>
+                    <span>{error}</span>
                 </div>
             )}
 
             {executionMsg && (
                 <div className={styles.executionBanner}>
                     <div className={styles.bannerLeft}>
-                        <span>✅</span>
                         <span>{executionMsg}</span>
                     </div>
                     <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>Mock data generated</span>

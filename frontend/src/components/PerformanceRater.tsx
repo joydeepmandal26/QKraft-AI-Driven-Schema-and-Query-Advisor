@@ -59,11 +59,11 @@ export default function PerformanceRater({ schemaContent }: { schemaContent: str
                     {analyzed && (
                         isOptimal || recommendations.length === 0 ? (
                             <span className={styles.scoreBadgeOptimal}>
-                                🏆 100/100 Optimal
+                                100/100 Optimal
                             </span>
                         ) : (
                             <span className={styles.scoreBadgeWarning}>
-                                ⚠️ {score}/100 Bottlenecks
+                                {score}/100 Bottlenecks
                             </span>
                         )
                     )}
@@ -84,7 +84,7 @@ export default function PerformanceRater({ schemaContent }: { schemaContent: str
                         <ul className={styles.list}>
                             {recommendations.map((rec, i) => (
                                 <li key={i} className={styles.listItem}>
-                                    <span className={styles.itemIcon}>⚠️</span>
+                                    <span className={styles.itemIcon}>•</span>
                                     <span className={styles.itemText}>{rec}</span>
                                 </li>
                             ))}
@@ -92,17 +92,16 @@ export default function PerformanceRater({ schemaContent }: { schemaContent: str
                     ) : (
                         <div className={styles.perfectCard}>
                             <div className={styles.perfectHeader}>
-                                <span>✅</span>
                                 <span>Schema is Fully Optimized!</span>
                             </div>
                             <p className={styles.perfectDesc}>
                                 Zero query bottlenecks detected. All tables have explicit primary keys, foreign keys for join ordering, and strategic B-Tree performance indexes.
                             </p>
                             <div className={styles.featureChecks}>
-                                <span className={styles.checkBadge}>✓ Clustered Primary Keys</span>
-                                <span className={styles.checkBadge}>✓ B-Tree Filter Indexes</span>
-                                <span className={styles.checkBadge}>✓ Foreign Key Joins</span>
-                                <span className={styles.checkBadge}>✓ Zero Full Table Scans</span>
+                                <span className={styles.checkBadge}>Clustered Primary Keys</span>
+                                <span className={styles.checkBadge}>B-Tree Filter Indexes</span>
+                                <span className={styles.checkBadge}>Foreign Key Joins</span>
+                                <span className={styles.checkBadge}>Zero Full Table Scans</span>
                             </div>
                         </div>
                     )}

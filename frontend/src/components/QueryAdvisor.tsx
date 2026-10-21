@@ -186,7 +186,7 @@ export default function QueryAdvisor({
                         }}
                         title="Clear conversation history"
                     >
-                        🗑️ Clear Chat
+                        Clear Chat
                     </button>
                 )}
             </div>
@@ -200,7 +200,7 @@ export default function QueryAdvisor({
                         onClick={() => handleSend(p)}
                         disabled={loading || (!schemaContent && !optimizedSchema)}
                     >
-                        ⚡ {p}
+                        {p}
                     </button>
                 ))}
             </div>
@@ -224,7 +224,7 @@ export default function QueryAdvisor({
                     if (m.error) {
                         return (
                             <div key={m.id} className={styles.assistantCard} style={{ borderColor: '#ef4444' }}>
-                                <p style={{ color: '#fca5a5' }}>⚠️ {m.error}</p>
+                                <p style={{ color: '#fca5a5' }}>{m.error}</p>
                             </div>
                         );
                     }
@@ -235,7 +235,7 @@ export default function QueryAdvisor({
                         <div key={m.id} className={styles.assistantCard}>
                             <div className={styles.cardHeader}>
                                 <span style={{ fontWeight: 600, color: '#38bdf8', fontSize: '0.9rem' }}>
-                                    ⚡ Schema-Optimized Query
+                                    Schema-Optimized Query
                                 </span>
                                 {m.details?.estimated_speedup && (
                                     <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 700 }}>
@@ -249,7 +249,7 @@ export default function QueryAdvisor({
                             {m.details?.techniques_used && (
                                 <div className={styles.techPills}>
                                     {m.details.techniques_used.map((tech, idx) => (
-                                        <span key={idx} className={styles.techPill}>✓ {tech}</span>
+                                        <span key={idx} className={styles.techPill}>{tech}</span>
                                     ))}
                                 </div>
                             )}
@@ -273,7 +273,7 @@ export default function QueryAdvisor({
                                     onClick={() => handleExecuteQuery(i, m.optimized_sql || '', m.unoptimized_sql)}
                                     disabled={m.isExecuting}
                                 >
-                                    {m.isExecuting ? '⚡ Running on DB...' : '⚡ Execute Query'}
+                                    {m.isExecuting ? 'Running on DB...' : 'Execute Query'}
                                 </button>
                                 {m.optimized_sql && (
                                     <button
@@ -281,7 +281,7 @@ export default function QueryAdvisor({
                                         className={styles.copyBtn}
                                         onClick={() => handleCopy(m.id, m.optimized_sql || '')}
                                     >
-                                        {copiedId === m.id ? '✅ Copied' : '📋 Copy SQL'}
+                                        {copiedId === m.id ? 'Copied' : 'Copy SQL'}
                                     </button>
                                 )}
                             </div>
@@ -299,7 +299,6 @@ export default function QueryAdvisor({
                                     gap: '0.5rem',
                                     marginTop: '0.4rem'
                                 }}>
-                                    <span>⚠️</span>
                                     <span>{m.executionError}</span>
                                 </div>
                             )}
@@ -334,10 +333,10 @@ export default function QueryAdvisor({
                                     <div className={styles.perfComparisonCard}>
                                         <div className={styles.perfHeader}>
                                             <div className={styles.perfTitle}>
-                                                <span>📊</span> Performance Comparison
+                                                Performance Comparison
                                             </div>
                                             <div className={styles.timeSavedHighlight}>
-                                                ⚡ {exec.time_saved_ms} ms Saved (+{exec.time_saved_pct}% Faster)
+                                                {exec.time_saved_ms} ms Saved (+{exec.time_saved_pct}% Faster)
                                             </div>
                                         </div>
 
@@ -408,7 +407,7 @@ export default function QueryAdvisor({
 
                 {loading && (
                     <div className={styles.assistantCard}>
-                        <p style={{ color: '#a78bfa', margin: 0 }}>⚡ Optimizing query based on active schema indexes...</p>
+                        <p style={{ color: '#a78bfa', margin: 0 }}>Optimizing query based on active schema indexes...</p>
                     </div>
                 )}
             </div>
@@ -433,7 +432,7 @@ export default function QueryAdvisor({
                         }}
                         title="Clear conversation and input"
                     >
-                        🗑️ Clear
+                        Clear
                     </button>
                 )}
                 <button 
