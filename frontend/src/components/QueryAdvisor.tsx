@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import styles from './QueryAdvisor.module.css';
 import { safeFetchJson } from '@/lib/api';
 
@@ -95,6 +95,7 @@ export default function QueryAdvisor({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const chatWindowRef = useRef<HTMLDivElement>(null);
 
     const activeTables = useMemo(() => {
         return extractSchemaTables(optimizedSchema || schemaContent);
@@ -170,6 +171,15 @@ export default function QueryAdvisor({
                     details: data.details
                 }
             ]);
+
+            setTimeout(() => {
+                if (chatWindowRef.current) {
+                    chatWindowRef.current.scrollTo({
+                        top: chatWindowRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100);
         } catch (error: any) {
             console.error(error);
             setMessages(prev => [
@@ -221,6 +231,15 @@ export default function QueryAdvisor({
 
             setMessages(prev => prev.map((m, idx) => idx === msgIndex ? { ...m, executionResult: execResult, isExecuting: false, executionError: undefined } : m));
             onQueryExecuted(execResult);
+
+            setTimeout(() => {
+                if (chatWindowRef.current) {
+                    chatWindowRef.current.scrollTo({
+                        top: chatWindowRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 150);
         } catch (err: any) {
             console.error(err);
             setMessages(prev => prev.map((m, idx) => idx === msgIndex ? { ...m, isExecuting: false, executionError: err.message } : m));
@@ -269,7 +288,7 @@ export default function QueryAdvisor({
                 ))}
             </div>
 
-            <div className={styles.chatWindow}>
+            <div className={styles.chatWindow} ref={chatWindowRef}>
                 {messages.length === 0 && (
                     <div className={styles.placeholder}>
                         <p>Ask for any query or analysis. Every query is directly optimized against the active schema&apos;s indexes, constraints, and joins.</p>
